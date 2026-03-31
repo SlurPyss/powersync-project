@@ -8,8 +8,8 @@ interface BookingContextType {
   stations: Station[];
   bookings: Booking[];
   addBooking: (booking: any) => Promise<void>;
-  updateBookingStatus: (bookingId: string, status: Booking['status']) => void;
-  deleteBooking: (bookingId: string) => void;
+  updateBookingStatus: (bookingId: string, status: Booking['status']) => Promise<void>;
+  deleteBooking: (bookingId: string) => Promise<void>;
   isLoading: boolean;
   refreshBookings: () => Promise<void>;
 }
@@ -124,16 +124,24 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
-    // In a real app, this would be an API call
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status } : b))
-    );
+  const updateBookingStatus = async (bookingId: string, status: Booking['status']) => {
+    try {
+      await axios.put(`${API_BASE_URL}/bookings/${bookingId}/status`, { status });
+      setBookings((prev) =>
+        prev.map((b) => (b.id === bookingId ? { ...b, status } : b))
+      );
+    } catch (error) {
+      console.error('Failed to update booking status:', error);
+    }
   };
 
-  const deleteBooking = (bookingId: string) => {
-    // In a real app, this would be an API call
-    setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+  const deleteBooking = async (bookingId: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/bookings/${bookingId}`);
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+    } catch (error) {
+      console.error('Failed to delete booking:', error);
+    }
   };
 
   return (

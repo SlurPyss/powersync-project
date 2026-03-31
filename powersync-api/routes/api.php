@@ -18,6 +18,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/bookings', [BookingController::class, 'index']);
+    Route::put('/bookings/{id}/status', [BookingController::class, 'updateStatus']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::post('/stations/{id}/book', [BookingController::class, 'store']);
     Route::get('/bookings/stats', [BookingController::class, 'stats']);
 });

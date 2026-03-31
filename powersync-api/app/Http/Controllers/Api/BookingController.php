@@ -54,6 +54,34 @@ class BookingController extends Controller
         ], 201);
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $booking = auth()->user()->bookings()->findOrFail($id);
+        
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,confirmed,charging,completed,cancelled',
+        ]);
+
+        $booking->update([
+            'status' => $validated['status']
+        ]);
+
+        return response()->json([
+            'message' => 'Status booking berhasil diperbarui',
+            'data' => $booking
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $booking = auth()->user()->bookings()->findOrFail($id);
+        $booking->delete();
+
+        return response()->json([
+            'message' => 'Booking berhasil dihapus'
+        ]);
+    }
+
     public function stats()
     {
         $user = auth()->user();

@@ -31,11 +31,15 @@ const MyBookings: React.FC = () => {
     }
   };
 
-  const handleNextStatus = (id: string, current: string) => {
+  const handleNextStatus = async (id: string, current: string) => {
     const statuses: any[] = ['pending', 'confirmed', 'charging', 'completed'];
     const currentIndex = statuses.indexOf(current);
     if (currentIndex !== -1 && currentIndex < statuses.length - 1) {
-      updateBookingStatus(id, statuses[currentIndex + 1]);
+      try {
+        await updateBookingStatus(id, statuses[currentIndex + 1]);
+      } catch (error) {
+        console.error('Handled state change failure:', error);
+      }
     }
   };
 
