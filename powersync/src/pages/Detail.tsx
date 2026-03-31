@@ -5,12 +5,14 @@ import {
   ParkingCircle, Calculator, BadgeCheck 
 } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
+import { useAuth } from '../context/AuthContext';
 import type { Booking } from '../types';
 
 const Detail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { stations, addBooking } = useBooking();
+  const { user } = useAuth();
   
   const station = useMemo(() => stations.find((s) => s.id === id), [stations, id]);
 
@@ -27,6 +29,20 @@ const Detail: React.FC = () => {
     estimatedEnergy: 20,
     notes: '',
   });
+
+  // Auto-fill from user profile
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        customerName: user.name || prev.customerName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        vehicleType: user.vehicle_type || prev.vehicleType,
+        plateNumber: user.plate_number || prev.plateNumber,
+      }));
+    }
+  }, [user]);
 
   const [totalPrice, setTotalPrice] = useState(0);
 

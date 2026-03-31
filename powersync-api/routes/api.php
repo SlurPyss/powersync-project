@@ -15,6 +15,7 @@ Route::get('/stations/{id}', [StationController::class, 'show']);
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/stations/{id}/book', [BookingController::class, 'store']);

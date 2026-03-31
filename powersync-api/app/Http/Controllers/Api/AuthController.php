@@ -61,6 +61,41 @@ class AuthController extends Controller
         return response()->json(auth()->user());
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'phone' => 'nullable|string|max:20',
+            'vehicle_type' => 'nullable|string|max:50',
+            'plate_number' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->vehicle_type = $request->vehicle_type;
+        $user->plate_number = $request->plate_number;
+
+        if ($request->password) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'data' => $user
+        ]);
+    }
+
     public function logout()
     {
         auth()->user()->tokens()->delete();

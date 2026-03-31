@@ -5,6 +5,9 @@ interface User {
   id: number;
   name: string;
   email: string;
+  phone?: string;
+  vehicle_type?: string;
+  plate_number?: string;
 }
 
 interface AuthContextType {
@@ -12,6 +15,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, userData: User) => void;
   logout: () => Promise<void>;
+  updateUser: (userData: User) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -53,6 +57,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
+
   const logout = async () => {
     try {
       if (token) {
@@ -69,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token && !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!token && !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

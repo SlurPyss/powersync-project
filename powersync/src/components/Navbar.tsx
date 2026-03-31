@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
 
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-100 p-2 animate-in fade-in slide-in-from-top-2">
-                  <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl transition-colors">
+                  <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl transition-colors">
                     <UserIcon size={16} />
                     Profil Saya
                   </Link>
