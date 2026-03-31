@@ -20,7 +20,10 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+<<<<<<< HEAD
     "erasableSyntaxOnly": true,
+=======
+>>>>>>> 2ec07baf1a399f1d209fa5eeb2dbb057061ce5c2
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
