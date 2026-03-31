@@ -244,6 +244,21 @@ const Detail: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
+                       <label className="text-sm font-bold text-slate-700 ml-1">Nomor Telepon</label>
+                       <input
+                        required
+                        type="tel"
+                        name="phone"
+                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                        placeholder="0812xxxx"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
                        <label className="text-sm font-bold text-slate-700 ml-1">Nomor Plat</label>
                        <input
                         required
@@ -343,7 +358,7 @@ const Detail: React.FC = () => {
 
                 <button type="submit" className="w-full btn-primary py-4 text-lg">Konfirmasi Booking</button>
                 <p className="text-xs text-slate-400 text-center font-medium px-8 italic">
-                  *Dengan mengonfirmasi, Anda menyetujui syarat dan ketentuan penggunaan fasilitas FleetCharge di area {station.name}.
+                  *Dengan mengonfirmasi, Anda menyetujui syarat dan ketentuan penggunaan fasilitas PowerSync di area {station.name}.
                 </p>
               </form>
             </div>

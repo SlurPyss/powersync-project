@@ -12,7 +12,17 @@ class Station extends Model
     protected $fillable = [
         'name',
         'location',
+        'type',
+        'power',
         'capacity',
+        'available_slots',
         'connectors',
+        'status',
+        'image',
+        'price_per_kwh',
+        'facilities',
+        'rating',
+        'reviews',
+        'operating_hours',
     ];
 }

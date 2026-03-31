@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   BarChart, Bar, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area 
@@ -9,47 +10,87 @@ import {
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  // Mock analytics data
-  const revenueData = [
-    { name: 'Sen', value: 1200000 },
-    { name: 'Sel', value: 1800000 },
-    { name: 'Rab', value: 2400000 },
-    { name: 'Kam', value: 2100000 },
-    { name: 'Jum', value: 3100000 },
-    { name: 'Sab', value: 4500000 },
-    { name: 'Min', value: 3800000 },
-  ];
+  const [stats, setStats] = useState<any>(null);
+  const API_BASE_URL = 'http://127.0.0.1:8001/api';
 
-  const energyData = [
-    { name: 'Nagoya', kwh: 450 },
-    { name: 'Btm Ctr', kwh: 380 },
-    { name: 'Harbour', kwh: 220 },
-    { name: 'G. Batam', kwh: 590 },
-    { name: 'BCS', kwh: 180 },
-    { name: 'Kepri', kwh: 310 },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/bookings/stats`);
+        setStats(response.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
 
-  const monthlyTrends = [
-    { month: 'Jan', revenue: 45000000, energy: 12000 },
-    { month: 'Feb', revenue: 52000000, energy: 15400 },
-    { month: 'Mar', revenue: 48000000, energy: 14200 },
-    { month: 'Apr', revenue: 61000000, energy: 18900 },
-    { month: 'Mei', revenue: 55000000, energy: 16500 },
-    { month: 'Jun', revenue: 72000000, energy: 21000 },
-  ];
-
-  const statusDistribution = [
-    { name: 'Completed', value: 450, color: '#10b981' },
-    { name: 'Active', value: 45, color: '#0ea5e9' },
-    { name: 'Pending', value: 120, color: '#f59e0b' },
-    { name: 'Cancelled', value: 35, color: '#f43f5e' },
+  const revenueData = stats?.dailyBookings?.map((d: any) => ({
+    name: new Date(d.date).toLocaleDateString('id-ID', { weekday: 'short' }),
+    value: d.count * 250000 // Mock multiplier if actual revenue not in dailyBookings
+  })) || [
+    { name: 'Sen', value: 0 },
+    { name: 'Sel', value: 0 },
+    { name: 'Rab', value: 0 },
+    { name: 'Kam', value: 0 },
+    { name: 'Jum', value: 0 },
+    { name: 'Sab', value: 0 },
+    { name: 'Min', value: 0 },
   ];
 
   const kpiStats = [
-    { label: 'Total Revenue', value: 'Rp 347M', change: '+12.5%', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Energy', value: '98,240 kWh', change: '+8.2%', icon: Zap, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Active Users', value: '1,842', change: '+15.1%', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Avg. Rating', value: '4.85/5', change: '+0.5%', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { 
+      label: 'Total Revenue', 
+      value: stats ? `Rp ${(stats.totalRevenue / 1000000).toFixed(1)}jt` : 'Rp 0', 
+      change: '+12.5%', 
+      icon: DollarSign, 
+      color: 'text-emerald-600', 
+      bg: 'bg-emerald-50' 
+    },
+    { 
+      label: 'Total Energy', 
+      value: stats ? `${stats.totalEnergy.toLocaleString()} kWh` : '0 kWh', 
+      change: '+8.2%', 
+      icon: Zap, 
+      color: 'text-blue-600', 
+      bg: 'bg-blue-50' 
+    },
+    { 
+      label: 'Total Bookings', 
+      value: stats ? stats.totalBookings.toLocaleString() : '0', 
+      change: '+15.1%', 
+      icon: Users, 
+      color: 'text-purple-600', 
+      bg: 'bg-purple-50' 
+    },
+    { 
+      label: 'Avg. Rating', 
+      value: '4.85/5', 
+      change: '+0.5%', 
+      icon: Activity, 
+      color: 'text-amber-600', 
+      bg: 'bg-amber-50' 
+    },
+  ];
+
+  // Rest of mock data logic if not in API...
+  const energyData = stats?.energyData || [];
+
+  const statusColors: any = {
+    'pending': '#f59e0b',
+    'confirmed': '#0ea5e9',
+    'charging': '#10b981',
+    'completed': '#64748b',
+    'cancelled': '#f43f5e'
+  };
+
+  const statusDistribution = stats?.statusDistribution?.map((s: any) => ({
+    ...s,
+    color: statusColors[s.name] || '#64748b'
+  })) || [];
+
+  const monthlyTrends = [
+    { month: 'Apr', revenue: stats?.totalRevenue || 0, energy: stats?.totalEnergy || 0 },
   ];
 
   return (
@@ -60,7 +101,7 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
           <div className="space-y-4">
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Analytics <span className="text-emerald-600">Dashboard</span></h1>
-            <p className="text-slate-600 font-medium">Laporan performa dan statistik stasiun FleetCharge di Batam.</p>
+            <p className="text-slate-600 font-medium">Laporan performa dan statistik stasiun PowerSync di Batam.</p>
           </div>
           <button className="btn-secondary flex items-center gap-2">
             <Download size={18} />
@@ -131,7 +172,7 @@ const Dashboard: React.FC = () => {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {statusDistribution.map((entry, index) => (
+                    {statusDistribution.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

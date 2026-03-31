@@ -8,12 +8,20 @@ use App\Models\Booking;
 
 class BookingController extends Controller
 {
+    public function index()
+    {
+        $bookings = auth()->user()->bookings()->with('station')->latest()->get();
+        return response()->json($bookings);
+    }
+
     public function store(Request $request, $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email',
             'phone' => 'required|string|max:20',
+            'vehicle_type' => 'nullable|string|max:50',
+            'plate_number' => 'nullable|string|max:20',
             'connector' => 'required|string|max:50',
             'time' => 'required|date_format:Y-m-d\TH:i',
             'duration' => 'required|integer|min:1',
@@ -21,15 +29,16 @@ class BookingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Tarif per kWh (misal Rp 2500)
         $ratePerKwh = 2500;
         $price = $validated['energy'] * $ratePerKwh;
 
-        $booking = Booking::create([
+        $booking = auth()->user()->bookings()->create([
             'station_id' => $id,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'vehicle_type' => $validated['vehicle_type'],
+            'plate_number' => $validated['plate_number'],
             'connector' => $validated['connector'],
             'time' => $validated['time'],
             'duration' => $validated['duration'],
@@ -47,14 +56,26 @@ class BookingController extends Controller
 
     public function stats()
     {
-        $totalBookings = Booking::count();
-        $totalEnergy = Booking::sum('energy');
-        $totalRevenue = Booking::sum('price');
+        $user = auth()->user();
+        $totalBookings = $user->bookings()->count();
+        $totalEnergy = $user->bookings()->sum('energy');
+        $totalRevenue = $user->bookings()->sum('price');
 
-        // contoh grouping per hari
-        $dailyBookings = Booking::selectRaw('DATE(time) as date, COUNT(*) as count')
+        $dailyBookings = $user->bookings()
+            ->selectRaw('DATE(time) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
+            ->get();
+
+        $energyData = $user->bookings()
+            ->join('stations', 'bookings.station_id', '=', 'stations.id')
+            ->selectRaw('stations.name, SUM(bookings.energy) as kwh')
+            ->groupBy('stations.name')
+            ->get();
+
+        $statusDistribution = $user->bookings()
+            ->selectRaw('status as name, COUNT(*) as value')
+            ->groupBy('status')
             ->get();
 
         return response()->json([
@@ -62,6 +83,8 @@ class BookingController extends Controller
             'totalEnergy' => $totalEnergy,
             'totalRevenue' => $totalRevenue,
             'dailyBookings' => $dailyBookings,
+            'energyData' => $energyData,
+            'statusDistribution' => $statusDistribution,
         ]);
     }
 }

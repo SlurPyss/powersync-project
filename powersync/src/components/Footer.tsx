@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-2 mb-6">
             <Zap className="text-emerald-500" fill="currentColor" size={28} />
-            <span className="text-2xl font-bold text-white tracking-tight">FleetCharge</span>
+            <span className="text-2xl font-bold text-white tracking-tight">PowerSync</span>
           </div>
           <p className="text-slate-400 mb-6 leading-relaxed">
             Solusi pengisian daya kendaraan listrik terpercaya untuk masa depan yang lebih hijau dan berkelanjutan.
@@ -58,14 +58,14 @@ const Footer: React.FC = () => {
             </li>
             <li className="flex items-center gap-3">
               <Mail className="text-emerald-500" size={18} />
-              <span>support@fleetcharge.id</span>
+              <span>support@powersync.id</span>
             </li>
           </ul>
         </div>
       </div>
       <div className="container mx-auto px-6 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-sm text-slate-500">
-          © 2026 FleetCharge. Seluruh Hak Cipta Dilindungi.
+          © 2026 PowerSync. Seluruh Hak Cipta Dilindungi.
         </p>
         <div className="flex gap-8 text-sm text-slate-500">
           <a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>

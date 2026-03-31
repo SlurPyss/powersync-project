@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
+import { useBooking } from '../context/BookingContext';
 import { Zap, Shield, Battery, CreditCard, ChevronRight, Star } from 'lucide-react';
 
 const Home: React.FC = () => {
+  const { stations } = useBooking();
+  const featuredStation = stations[0] || {
+    name: 'Grand Batam Mall - Ultra Fast',
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    slots: { available: 4, total: 4 }
+  };
   const stats = [
     { label: 'Stasiun Active', value: '1,200+' },
     { label: 'Sesi Charging', value: '450k+' },
@@ -57,7 +64,7 @@ const Home: React.FC = () => {
             </h1>
             
             <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
-              FleetCharge menyediakan jaringan pengisian kendaraan listrik super cepat di Batam. Temukan stasiun terdekat, booking slot, dan pantau pengisian Anda secara real-time.
+              PowerSync menyediakan jaringan pengisian kendaraan listrik super cepat di Batam. Temukan stasiun terdekat, booking slot, dan pantau pengisian Anda secara real-time.
             </p>
             
             <div className="flex flex-wrap gap-4 pt-4">
@@ -73,9 +80,9 @@ const Home: React.FC = () => {
           
           <div className="relative animate-in fade-in zoom-in duration-1000 delay-200">
             <img 
-              src="https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1000" 
-              alt="EV Charging Station" 
-              className="rounded-3xl shadow-2xl border-4 border-white transform md:rotate-2 hover:rotate-0 transition-transform duration-500"
+              src={featuredStation.image} 
+              alt={featuredStation.name} 
+              className="rounded-3xl shadow-2xl border-4 border-white transform md:rotate-2 hover:rotate-0 transition-transform duration-500 w-full h-[400px] object-cover"
             />
             <div className="absolute -bottom-6 -left-6 glass-card p-6 rounded-2xl max-w-[240px]">
               <div className="flex items-center gap-3 mb-2">
@@ -84,10 +91,12 @@ const Home: React.FC = () => {
                 </div>
                 <div className="font-bold text-slate-900">Stasiun Terfavorit</div>
               </div>
-              <p className="text-sm text-slate-600 font-medium">Grand Batam Mall - Ultra Fast</p>
+              <p className="text-sm text-slate-600 font-medium">{featuredStation.name}</p>
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-emerald-600 font-bold">Tersedia</span>
-                <span className="text-xs text-slate-400">4 Slots Total</span>
+                <span className={`font-bold ${featuredStation.slots.available > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {featuredStation.slots.available > 0 ? 'Tersedia' : 'Penuh'}
+                </span>
+                <span className="text-xs text-slate-400">{featuredStation.slots.available} / {featuredStation.slots.total} Slots</span>
               </div>
             </div>
           </div>
@@ -113,7 +122,7 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
             <h2 className="text-emerald-600 font-bold tracking-widest uppercase text-sm">Keunggulan Layanan</h2>
-            <h3 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Mengapa Memilih FleetCharge?</h3>
+            <h3 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Mengapa Memilih PowerSync?</h3>
             <p className="text-lg text-slate-600">Kami berkomitmen memberikan pengalaman terbaik dalam ekosistem kendaraan listrik dengan infrastruktur yang mumpuni.</p>
           </div>
           
@@ -145,7 +154,7 @@ const Home: React.FC = () => {
           <div className="bg-slate-900 rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-1/2 h-full opacity-20 pointer-events-none">
                <img 
-                src="https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1000" 
+                src="https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000" 
                 alt="Pattern" 
                 className="w-full h-full object-cover"
               />

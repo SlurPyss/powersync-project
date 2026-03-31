@@ -7,7 +7,7 @@ export default function BookingHistory() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/api/bookings");
+        const response = await axios.get("http://127.0.0.1:8001/api/bookings");
         setBookings(response.data);
       } catch (error) {
         console.error("Gagal ambil data booking:", error);

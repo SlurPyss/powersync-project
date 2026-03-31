@@ -12,7 +12,7 @@ export default function StationDetail() {
     const fetchStation = async () => {
       try {
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/stations/${id}`
+          `http://127.0.0.1:8001/api/stations/${id}`
         );
         setStation(response.data);
       } catch (error) {
@@ -47,7 +47,7 @@ export default function StationDetail() {
 
     try {
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/stations/${id}/book`,
+        `http://127.0.0.1:8001/api/stations/${id}/book`,
         bookingData
       );
       alert("Booking berhasil: " + JSON.stringify(response.data));

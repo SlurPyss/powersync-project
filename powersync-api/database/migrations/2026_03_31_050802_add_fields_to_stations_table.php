@@ -14,8 +14,18 @@ return new class extends Migration
         Schema::table('stations', function (Blueprint $table) {
             $table->string('name')->after('id');
             $table->string('location')->nullable();
-            $table->integer('capacity')->default(0);
-            $table->string('connectors')->nullable(); // contoh: "CCS, CHAdeMO"
+            $table->string('type')->after('location'); // e.g. Ultra Fast, Super Fast
+            $table->string('power')->after('type'); // e.g. 350kW
+            $table->integer('capacity')->default(0); // Total slots
+            $table->integer('available_slots')->default(0); 
+            $table->string('connectors')->nullable(); 
+            $table->string('status')->default('available'); // available, busy, maintenance
+            $table->string('image')->nullable();
+            $table->integer('price_per_kwh')->default(0);
+            $table->text('facilities')->nullable(); // Store as JSON string
+            $table->float('rating')->default(5.0);
+            $table->integer('reviews')->default(0);
+            $table->string('operating_hours')->default('24/7');
         });
     
     }

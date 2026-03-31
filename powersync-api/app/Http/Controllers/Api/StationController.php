@@ -8,6 +8,11 @@ use App\Models\Station;
 
 class StationController extends Controller
 {
+    public function index()
+    {
+        return response()->json(Station::all());
+    }
+
     public function show($id)
     {
         // Cari station berdasarkan ID
