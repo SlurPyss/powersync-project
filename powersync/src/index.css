@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: var(--color-emerald-600);
+  --color-brand-dark: var(--color-emerald-700);
+  --color-brand-light: var(--color-emerald-500);
+  
+  --font-sans: 'Inter', 'Outfit', system-ui, sans-serif;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: white;
+  font-family: var(--font-sans);
+}
+
+@utility glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-emerald-100 shadow-xl;
+}
+
+@utility btn-primary {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold shadow-lg shadow-emerald-200 active:scale-95;
+}
+
+@utility btn-secondary {
+  @apply bg-white border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-6 py-3 rounded-xl transition-all duration-300 font-semibold active:scale-95;
+}
