@@ -11,6 +11,7 @@ interface BookingContextType {
   updateBookingStatus: (bookingId: string, status: Booking['status']) => Promise<void>;
   deleteBooking: (bookingId: string) => Promise<void>;
   isLoading: boolean;
+  checkIn: (bookingId: string) => Promise<any>;
   refreshBookings: () => Promise<void>;
 }
 
@@ -37,17 +38,19 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           id: b.id.toString(),
           stationId: b.station_id.toString(),
           stationName: b.station?.name || 'Unknown Station',
+          slotId: b.slot_id?.toString(),
+          slotNumber: b.slot?.slot_number,
           customerName: b.name,
           email: b.email,
           phone: b.phone,
           vehicleType: b.vehicle_type || 'EV Controller',
           plateNumber: b.plate_number || 'B 1234 PS',
           connectorType: b.connector,
-          startDate: b.time.split('T')[0],
-          startTime: b.time.split('T')[1]?.substring(0, 5) || '00:00',
+          startDate: b.date,
+          startTime: b.start_time,
+          endTime: b.end_time,
+          checkInTime: b.check_in_time,
           duration: b.duration,
-          estimatedEnergy: b.energy,
-          totalPrice: b.price,
           status: b.status as BookingStatus,
           notes: b.notes,
           createdAt: b.created_at,
@@ -110,9 +113,9 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         vehicle_type: bookingData.vehicleType,
         plate_number: bookingData.plateNumber,
         connector: bookingData.connectorType,
-        time: `${bookingData.startDate}T${bookingData.startTime}`,
+        date: bookingData.startDate,
+        start_time: bookingData.startTime,
         duration: bookingData.duration,
-        energy: bookingData.estimatedEnergy,
         notes: bookingData.notes,
       };
 
@@ -135,6 +138,17 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const checkIn = async (bookingId: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/bookings/${bookingId}/check-in`);
+      await refreshBookings();
+      return response.data;
+    } catch (error) {
+      console.error('Failed to check in:', error);
+      throw error;
+    }
+  };
+
   const deleteBooking = async (bookingId: string) => {
     try {
       await axios.delete(`${API_BASE_URL}/bookings/${bookingId}`);
@@ -146,7 +160,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   return (
     <BookingContext.Provider
-      value={{ stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, refreshBookings }}
+      value={{ stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, checkIn, refreshBookings }}
     >
       {children}
     </BookingContext.Provider>

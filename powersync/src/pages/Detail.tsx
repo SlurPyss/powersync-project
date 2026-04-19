@@ -26,7 +26,6 @@ const Detail: React.FC = () => {
     startDate: new Date().toISOString().split('T')[0],
     startTime: '10:00',
     duration: 30,
-    estimatedEnergy: 20,
     notes: '',
   });
 
@@ -44,16 +43,13 @@ const Detail: React.FC = () => {
     }
   }, [user]);
 
-  const [totalPrice, setTotalPrice] = useState(0);
-
   useEffect(() => {
     if (station) {
-      setTotalPrice(formData.estimatedEnergy * station.pricePerKwh);
       if (station.connectors.length > 0 && !formData.connectorType) {
         setFormData(prev => ({ ...prev, connectorType: station.connectors[0] }));
       }
     }
-  }, [formData.estimatedEnergy, station]);
+  }, [station]);
 
   if (!station) {
     return (
@@ -70,26 +66,23 @@ const Detail: React.FC = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'duration' || name === 'estimatedEnergy' ? Number(value) : value,
+      [name]: name === 'duration' ? Number(value) : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newBooking: Booking = {
-      id: `bk-${Math.random().toString(36).substr(2, 9)}`,
-      stationId: station.id,
-      stationName: station.name,
-      ...formData,
-      totalPrice,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-
-    addBooking(newBooking);
-    alert('Booking berhasil dibuat! Menuju ke halaman Booking Saya...');
-    navigate('/my-bookings');
+    try {
+      await addBooking({
+        stationId: station.id,
+        ...formData,
+      });
+      alert('Permintaan Reservasi berhasil! Jika slot penuh, Anda akan otomatis masuk ke antrean. Menuju halaman jadwal...');
+      navigate('/my-bookings');
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Gagal melakukan reservasi.');
+    }
   };
 
   const facilityIcons: Record<string, any> = {
@@ -174,13 +167,13 @@ const Detail: React.FC = () => {
                     <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Status Slot</div>
                     <div className="flex items-center gap-2 font-extrabold text-emerald-600">
                       <BadgeCheck size={18} />
-                      {station.slots.available} / {station.slots.total} Available
+                      {station.slots?.available ?? 0} / {station.slots?.total ?? 0} Available
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Tarif per kWh</div>
+                    <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Tarif/Lokasi Info</div>
                     <div className="flex items-center gap-2 font-extrabold text-slate-900">
-                      Rp {station.pricePerKwh.toLocaleString()}
+                      Lihat Aplikasi Pembayaran Mitra
                     </div>
                   </div>
                 </div>
@@ -211,11 +204,11 @@ const Detail: React.FC = () => {
             <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-emerald-100 sticky top-[160px]">
               <div className="flex items-center gap-4 mb-8">
                 <div className="bg-emerald-600 p-3 rounded-2xl">
-                  <Calculator className="text-white" size={28} />
+                  <Clock className="text-white" size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900">Formulir Booking</h3>
-                  <p className="text-sm text-slate-500 font-medium">Lengkapi data untuk reservasi slot.</p>
+                  <h3 className="text-2xl font-bold text-slate-900">Reservasi Slot</h3>
+                  <p className="text-sm text-slate-500 font-medium">Pilih periode waktu & slot charging Anda.</p>
                 </div>
               </div>
 
@@ -231,6 +224,7 @@ const Detail: React.FC = () => {
                         placeholder="John Doe"
                         value={formData.customerName}
                         onChange={handleInputChange}
+                        disabled
                       />
                     </div>
                     <div className="space-y-2">
@@ -257,6 +251,7 @@ const Detail: React.FC = () => {
                         placeholder="john@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
+                        disabled
                       />
                     </div>
                     <div className="space-y-2">
@@ -316,13 +311,14 @@ const Detail: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100 mt-4">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 ml-1">Tanggal</label>
                       <input
                         type="date"
                         name="startDate"
-                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium shadow-inner"
                         value={formData.startDate}
                         onChange={handleInputChange}
                       />
@@ -332,43 +328,36 @@ const Detail: React.FC = () => {
                       <input
                         type="time"
                         name="startTime"
-                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium shadow-inner"
                         value={formData.startTime}
                         onChange={handleInputChange}
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center ml-1">
-                       <label className="text-sm font-bold text-slate-700">Estimasi Energi (kWh)</label>
-                       <span className="text-emerald-600 font-extrabold">{formData.estimatedEnergy} kWh</span>
+                     <div className="space-y-2">
+                       <label className="text-sm font-bold text-slate-700 ml-1">Durasi</label>
+                       <select
+                        name="duration"
+                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium shadow-inner"
+                        value={formData.duration}
+                        onChange={handleInputChange}
+                      >
+                        {[15, 30, 45, 60, 90, 120].map(d => (
+                          <option key={d} value={d}>{d} Menit</option>
+                        ))}
+                      </select>
                     </div>
-                    <input
-                      type="range"
-                      name="estimatedEnergy"
-                      min="5"
-                      max="100"
-                      step="5"
-                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                      value={formData.estimatedEnergy}
-                      onChange={handleInputChange}
-                    />
                   </div>
                 </div>
 
-                <div className="p-6 bg-slate-900 rounded-3xl space-y-4">
-                  <div className="flex justify-between items-center text-slate-400">
-                    <span className="text-sm font-medium">Estimasi Konsumsi</span>
-                    <span className="text-sm font-bold text-slate-200">{formData.estimatedEnergy} kWh</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-400">
-                    <span className="text-sm font-medium">Harga per kWh</span>
-                    <span className="text-sm font-bold text-slate-200">Rp {station.pricePerKwh.toLocaleString()}</span>
-                  </div>
-                  <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
-                    <span className="text-lg font-bold text-white">Total Bayar</span>
-                    <span className="text-2xl font-extrabold text-emerald-500">Rp {totalPrice.toLocaleString()}</span>
+                <div className="p-6 bg-emerald-50 rounded-3xl space-y-4 border border-emerald-100">
+                  <div className="flex items-start gap-4">
+                    <Shield size={24} className="text-emerald-600 shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-bold text-emerald-900 mb-1">Informasi Antrean</h4>
+                      <p className="text-sm text-emerald-800/80 leading-relaxed">
+                        Jika slot penuh pada waktu yang Anda pilih, permintaan ini akan secara otomatis dimasukkan ke sistem antrean (Queue). Sistem akan memberitahu jika ada pembatalan. Check-in hanya dapat dilakukan dari 15 menit sebelum hingga 10 menit sesudah jadwal.
+                      </p>
+                    </div>
                   </div>
                 </div>
 

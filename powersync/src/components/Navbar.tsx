@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Zap, LayoutDashboard, Search, History, Home as HomeIcon, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { Zap, LayoutDashboard, Search, History, Home as HomeIcon, LogOut, User as UserIcon, ChevronDown, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar: React.FC = () => {
@@ -11,9 +11,16 @@ const Navbar: React.FC = () => {
   const navItems = [
     { name: 'Beranda', path: '/', icon: HomeIcon },
     { name: 'Katalog', path: '/catalog', icon: Search },
-    { name: 'Booking Saya', path: '/my-bookings', icon: History },
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   ];
+
+  if (isAuthenticated) {
+    navItems.push({ name: 'Booking Saya', path: '/my-bookings', icon: History });
+  }
+
+  if (user?.role === 'admin') {
+    navItems.push({ name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard });
+    navItems.push({ name: 'Admin Panel', path: '/admin', icon: Shield });
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-emerald-50 order-slate-100 py-4 shadow-sm">

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Star, LayoutGrid, List, CheckCircle2, XCircle } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
@@ -9,6 +9,10 @@ const Catalog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<ChargerType | 'All'>('All');
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const filterTypes: (ChargerType | 'All')[] = ['All', 'Ultra Fast', 'Super Fast', 'Fast', 'Regular'];
 

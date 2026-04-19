@@ -18,23 +18,25 @@ export interface Station {
   image: string;
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'charging' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'accepted' | 'ready' | 'occupied' | 'completed' | 'cancelled';
 
 export interface Booking {
   id: string;
   stationId: string;
   stationName: string;
+  slotId?: string;
+  slotNumber?: string;
   customerName: string;
   email: string;
   phone: string;
-  vehicleType: string;
-  plateNumber: string;
+  vehicleType?: string;
+  plateNumber?: string;
   connectorType: string;
   startDate: string;
   startTime: string;
+  endTime: string;
+  checkInTime?: string;
   duration: number; // in minutes
-  estimatedEnergy: number; // in kWh
-  totalPrice: number;
   status: BookingStatus;
   notes?: string;
   createdAt: string;

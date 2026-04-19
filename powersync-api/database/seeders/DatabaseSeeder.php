@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'PowerSync Admin',
             'email' => 'admin@powersync.id',
             'password' => bcrypt('password'),
+            'role' => 'admin',
         ]);
 
         $stations = \App\Models\Station::all();
@@ -32,21 +33,29 @@ class DatabaseSeeder extends Seeder
         // Buat 15 booking acak untuk mendemonstrasikan dashboard
         for ($i = 0; $i < 15; $i++) {
             $station = $stations->random();
-            $energy = rand(15, 60);
-            $price = $energy * $station->price_per_kwh;
+            $slot = $station->slots()->inRandomOrder()->first();
             $daysAgo = rand(0, 6);
+            $startHour = rand(8, 20);
+            $durationMinutes = rand(30, 90);
+            
+            $startDateTime = now()->subDays($daysAgo)->setHour($startHour)->setMinute(0);
+            $endDateTime = clone $startDateTime;
+            $endDateTime->addMinutes($durationMinutes);
             
             \App\Models\Booking::create([
                 'user_id' => $admin->id,
                 'station_id' => $station->id,
+                'slot_id' => $slot ? $slot->id : null,
                 'name' => 'Customer ' . ($i + 1),
                 'email' => 'customer' . ($i + 1) . '@example.com',
                 'phone' => '0812' . rand(1000000, 9999999),
+                'vehicle_type' => 'Tesla Model 3',
+                'plate_number' => 'B 1234 PS',
                 'connector' => $connectors[array_rand($connectors)],
-                'time' => now()->subDays($daysAgo)->setHour(rand(8, 22))->setMinute(0)->toDateTimeString(),
-                'duration' => rand(30, 90),
-                'energy' => $energy,
-                'price' => $price,
+                'date' => $startDateTime->toDateString(),
+                'start_time' => $startDateTime->toTimeString(),
+                'end_time' => $endDateTime->toTimeString(),
+                'duration' => $durationMinutes,
                 'status' => $statuses[array_rand($statuses)],
                 'notes' => 'Generated sample booking',
             ]);

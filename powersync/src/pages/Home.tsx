@@ -1,146 +1,125 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useBooking } from '../context/BookingContext';
-import { Zap, Shield, Battery, CreditCard, ChevronRight, Star } from 'lucide-react';
+import { 
+  Zap, Shield, Battery, CreditCard, ChevronRight, 
+  MapPin, CheckCircle, Search, Smartphone 
+} from 'lucide-react';
 
 const Home: React.FC = () => {
   const { stations } = useBooking();
-  const featuredStation = stations[0] || {
-    name: 'Grand Batam Mall - Ultra Fast',
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
-    slots: { available: 4, total: 4 }
-  };
-  const stats = [
-    { label: 'Stasiun Active', value: '1,200+' },
-    { label: 'Sesi Charging', value: '450k+' },
-    { label: 'Energi Tersalurkan', value: '8.2 GWh' },
-    { label: 'Rating Pengguna', value: '4.9/5' },
+  const featuredStations = stations.slice(0, 3);
+
+  const steps = [
+    {
+      title: 'Cari Lokasi',
+      desc: 'Temukan titik pengisian terdekat dari lokasi Anda.',
+      icon: Search,
+      color: 'bg-blue-100 text-blue-600'
+    },
+    {
+      title: 'Pilih Jadwal',
+      desc: 'Pesan slot waktu tertentu agar tidak perlu mengantre lama.',
+      icon: Smartphone,
+      color: 'bg-emerald-100 text-emerald-600'
+    },
+    {
+      title: 'Check-In',
+      desc: 'Lakukan konfirmasi kehadiran 15 menit sebelum hingga 10 menit setelah jadwal.',
+      icon: CheckCircle,
+      color: 'bg-purple-100 text-purple-600'
+    },
+    {
+      title: 'Isi Daya EV',
+      desc: 'Hubungkan konektor dan sistem kami menyala otomatis.',
+      icon: Zap,
+      color: 'bg-amber-100 text-amber-600'
+    }
   ];
 
   const features = [
     {
-      title: 'Pengisian Super Cepat',
-      description: 'Teknologi Ultra Fast Charging hingga 350kW untuk efisiensi waktu Anda.',
+      title: 'Pengisian Ultra Fast',
+      description: 'Teknologi pengisian daya hingga 350kW, memungkinkan Anda mengisi dari 10% ke 80% hanya dalam 20 menit.',
       icon: Zap,
-      color: 'bg-emerald-100 text-emerald-600',
     },
     {
-      title: 'Keamanan Terjamin',
-      description: 'Sistem monitoring real-time dan proteksi kelistrikan standar internasional.',
+      title: 'Keamanan Berlapis',
+      description: 'Sistem kami dilengkapi dengan proteksi lonjakan arus dan suhu untuk menjaga baterai kendaraan Anda.',
       icon: Shield,
-      color: 'bg-blue-100 text-blue-600',
     },
     {
-      title: 'Pembayaran Mudah',
-      description: 'Integrasi dengan berbagai metode pembayaran digital dan kartu kredit.',
-      icon: CreditCard,
-      color: 'bg-purple-100 text-purple-600',
-    },
-    {
-      title: 'Manajemen Baterai',
-      description: 'Optimasi pengisian daya untuk menjaga kesehatan baterai kendaraan Anda.',
+      title: 'Sistem Antrean Cerdas',
+      description: 'Jika slot yang Anda inginkan penuh, otomatis masuk ke sistem antrean kami yang mempromosikan secara otomatis sesuai giliran.',
       icon: Battery,
-      color: 'bg-amber-100 text-amber-600',
-    },
+    }
   ];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-white">
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center pt-20 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full -z-10">
-          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-100/50 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-50/50 rounded-full blur-3xl invisible md:visible"></div>
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
+          <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-emerald-100/40 rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-[10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[120px]"></div>
         </div>
         
-        <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full font-medium text-sm border border-emerald-100">
-              <Zap size={16} fill="currentColor" />
-              <span>Infrastruktur Pengisian EV Terdepan di Indonesia</span>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-bold border border-emerald-100 animate-in fade-in slide-in-from-bottom duration-1000">
+               <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Platform Pengisian Kendaraan Listrik #1 di Indonesia
             </div>
             
-            <h1 className="text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight text-slate-900">
-              Isi Daya Masa Depanmu <span className="text-emerald-600">Lebih Cepat.</span>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 leading-[1.05] tracking-tight">
+              Booking Slot, <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">Tanpa Antre Lama.</span>
             </h1>
             
-            <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
-              PowerSync menyediakan jaringan pengisian kendaraan listrik super cepat di Batam. Temukan stasiun terdekat, booking slot, dan pantau pengisian Anda secara real-time.
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Platform reservasi SPKLU berbasis waktu pertama di Batam. Pesan slot favoritmu dan biarkan sistem antrean cerdas kami yang mengurus sisanya.
             </p>
             
-            <div className="flex flex-wrap gap-4 pt-4">
-              <Link to="/catalog" className="btn-primary flex items-center gap-2 text-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+              <Link to="/catalog" className="w-full sm:w-auto px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200 hover:bg-emerald-700 hover:scale-105 transition-all flex items-center justify-center gap-2">
                 Mulai Charging Sekarang
                 <ChevronRight size={20} />
               </Link>
-              <Link to="/dashboard" className="btn-secondary flex items-center gap-2 text-lg">
-                Lihat Dashboard
+              <Link to="/register" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all flex items-center justify-center">
+                Daftar Akun Gratis
               </Link>
             </div>
           </div>
-          
-          <div className="relative animate-in fade-in zoom-in duration-1000 delay-200">
-            <img 
-              src={featuredStation.image} 
-              alt={featuredStation.name} 
-              className="rounded-3xl shadow-2xl border-4 border-white transform md:rotate-2 hover:rotate-0 transition-transform duration-500 w-full h-[400px] object-cover"
-            />
-            <div className="absolute -bottom-6 -left-6 glass-card p-6 rounded-2xl max-w-[240px]">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="bg-emerald-600 p-2 rounded-lg">
-                  <Star className="text-white fill-current" size={20} />
-                </div>
-                <div className="font-bold text-slate-900">Stasiun Terfavorit</div>
-              </div>
-              <p className="text-sm text-slate-600 font-medium">{featuredStation.name}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className={`font-bold ${featuredStation.slots.available > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {featuredStation.slots.available > 0 ? 'Tersedia' : 'Penuh'}
-                </span>
-                <span className="text-xs text-slate-400">{featuredStation.slots.available} / {featuredStation.slots.total} Slots</span>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-emerald-600">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center space-y-2 border-r last:border-0 border-emerald-500/50">
-                <div className="text-4xl md:text-5xl font-bold text-white">{stat.value}</div>
-                <div className="text-emerald-100 font-medium uppercase tracking-wider text-xs md:text-sm">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
+      {/* How it Works */}
       <section className="py-24 bg-slate-50">
         <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-            <h2 className="text-emerald-600 font-bold tracking-widest uppercase text-sm">Keunggulan Layanan</h2>
-            <h3 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">Mengapa Memilih PowerSync?</h3>
-            <p className="text-lg text-slate-600">Kami berkomitmen memberikan pengalaman terbaik dalam ekosistem kendaraan listrik dengan infrastruktur yang mumpuni.</p>
+          <div className="text-center mb-20 space-y-4">
+            <h2 className="text-emerald-600 font-bold uppercase tracking-widest text-sm">Mudah & Cepat</h2>
+            <h3 className="text-4xl md:text-5xl font-black text-slate-900">Bagaimana Cara Kerjanya?</h3>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, i) => {
-              const Icon = feature.icon;
+            {steps.map((step, i) => {
+              const Icon = step.icon;
               return (
-                <div 
-                  key={i} 
-                  className="bg-white p-8 rounded-3xl border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-                >
-                  <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-6`}>
-                    <Icon size={28} />
+                <div key={i} className="relative group">
+                  {i < steps.length - 1 && (
+                    <div className="hidden lg:block absolute top-12 left-full w-full border-t-2 border-dashed border-slate-200 -z-0"></div>
+                  )}
+                  <div className="relative z-10 bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm group-hover:border-emerald-200 transition-all text-center">
+                    <div className={`w-16 h-16 ${step.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform`}>
+                      <Icon size={32} />
+                    </div>
+                    <h4 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h4>
+                    <p className="text-slate-500 font-medium text-sm leading-relaxed">{step.desc}</p>
+                    <div className="mt-4 text-emerald-600 font-black text-lg">0{i+1}</div>
                   </div>
-                  <h4 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h4>
-                  <p className="text-slate-600 leading-relaxed font-medium">
-                    {feature.description}
-                  </p>
                 </div>
               );
             })}
@@ -148,27 +127,82 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
+      {/* Featured Locations */}
+      <section className="py-24">
         <div className="container mx-auto px-6">
-          <div className="bg-slate-900 rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1/2 h-full opacity-20 pointer-events-none">
-               <img 
-                src="https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000" 
-                alt="Pattern" 
-                className="w-full h-full object-cover"
-              />
+          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
+            <div className="space-y-4">
+              <h2 className="text-emerald-600 font-bold uppercase tracking-widest text-sm">Lokasi Terdekat</h2>
+              <h3 className="text-4xl md:text-5xl font-black text-slate-900">Stasiun Unggulan Kami</h3>
             </div>
-            
-            <div className="relative z-10 max-w-2xl">
-              <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-[1.2]">Siap Beralih ke <span className="text-emerald-500">Energi Bersih?</span></h2>
-              <p className="text-xl text-slate-300 mb-10 leading-relaxed">
-                Bergabunglah dengan ribuan pengguna kendaraan listrik lainnya di Batam dan nikmati kemudahan pengisian daya di mana saja.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/catalog" className="btn-primary">Ayo Cari Stasiun</Link>
-                <button className="px-6 py-3 rounded-xl border border-slate-700 text-white hover:bg-slate-800 transition-colors font-semibold">Hubungi Sales</button>
+            <Link to="/catalog" className="text-emerald-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
+              Lihat Semua Lokasi <ChevronRight size={20} />
+            </Link>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {featuredStations.map((station) => (
+              <div key={station.id} className="group cursor-pointer">
+                <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6">
+                  <img 
+                    src={station.image} 
+                    alt={station.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-2">
+                       {station.slots?.available > 0 ? (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tersedia</span>
+                        </>
+                      ) : (
+                         <>
+                          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Antre</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                    <MapPin size={14} />
+                    {station.location}
+                  </div>
+                  <h4 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">{station.name}</h4>
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((_, i) => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div>
+                      ))}
+                      <span className="text-slate-400 text-xs font-bold ml-2">5.0 (42 Review)</span>
+                    </div>
+                    <div className="text-emerald-600 font-black">Rp {station.pricePerKwh}/kWh</div>
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-slate-900">
+        <div className="container mx-auto px-6 relative overflow-hidden rounded-[3rem]">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px]"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px]"></div>
+          
+          <div className="relative z-10 py-16 px-8 md:px-20 text-center max-w-4xl mx-auto space-y-10">
+            <h2 className="text-4xl md:text-6xl font-black text-white leading-tight">Siap Untuk Pengisian <br/> <span className="text-emerald-500">Masa Depan?</span></h2>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Daftar sekarang dan nikmati kemudahan reservasi slot tanpa ribet. Akun Anda akan tersimpan aman dengan sistem OTP terbaru.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/register" className="px-10 py-4 bg-emerald-500 text-slate-900 rounded-2xl font-black text-lg hover:bg-emerald-400 transition-all flex items-center gap-2">
+                Daftar Sekarang <CheckCircle size={20} />
+              </Link>
+              <button className="px-10 py-4 bg-slate-800 text-white rounded-2xl font-bold text-lg hover:bg-slate-700 transition-all">Hubungi Sales</button>
             </div>
           </div>
         </div>

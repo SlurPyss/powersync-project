@@ -111,8 +111,16 @@ class StationSeeder extends Seeder
             ],
         ];
 
-        foreach ($stations as $station) {
-            \App\Models\Station::create($station);
+        foreach ($stations as $data) {
+            $station = \App\Models\Station::create($data);
+            
+            for ($i = 1; $i <= $station->capacity; $i++) {
+                \App\Models\Slot::create([
+                    'station_id' => $station->id,
+                    'slot_number' => 'S' . str_pad($i, 2, '0', STR_PAD_LEFT)
+                ]);
+            }
         }
+
     }
 }

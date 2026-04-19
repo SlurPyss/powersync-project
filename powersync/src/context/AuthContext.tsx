@@ -8,6 +8,7 @@ interface User {
   phone?: string;
   vehicle_type?: string;
   plate_number?: string;
+  role: string;
 }
 
 interface AuthContextType {

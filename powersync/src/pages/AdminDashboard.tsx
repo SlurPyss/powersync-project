@@ -1,0 +1,206 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { 
+  Users, Package, Clock, CheckCircle, 
+  XCircle, Filter, Search, MoreVertical,
+  ArrowUpRight, DollarSign, Zap
+} from 'lucide-react';
+
+interface Booking {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  date: string;
+  start_time: string;
+  duration: number;
+  station: { name: string };
+  user: { name: string; email: string };
+}
+
+const AdminDashboard: React.FC = () => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  const API_BASE_URL = 'http://127.0.0.1:8001/api';
+
+  const fetchBookings = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/bookings`);
+      setBookings(response.data);
+    } catch (error) {
+      console.error('Failed to fetch bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const handleAction = async (id: number, action: 'accept' | 'reject' | 'complete') => {
+    try {
+      await axios.put(`${API_BASE_URL}/admin/bookings/${id}/${action}`);
+      fetchBookings(); // Refresh list
+    } catch (error) {
+      alert('Gagal memproses aksi');
+    }
+  };
+
+  const filteredBookings = bookings.filter(b => 
+    filter === 'all' ? true : b.status === filter
+  );
+
+  const stats = [
+    { label: 'Total Reservasi', value: bookings.length, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Antrean (Pending)', value: bookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Aktif (Occupied)', value: bookings.filter(b => b.status === 'occupied').length, icon: Zap, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Selesai', value: bookings.filter(b => b.status === 'completed').length, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-50' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 pt-10 pb-20">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-slate-900">Admin Control Panel</h1>
+            <p className="text-slate-500 font-medium">Monitoring and managing all power sessions.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Cari user atau stasiun..."
+                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none w-64 text-sm font-medium"
+              />
+            </div>
+            <button className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">
+              Export Data
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-3 ${stat.bg} ${stat.color} rounded-2xl`}>
+                    <Icon size={24} />
+                  </div>
+                  <span className="flex items-center text-emerald-600 text-xs font-bold gap-0.5">
+                    +12% <ArrowUpRight size={14} />
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Main Content Card */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+          <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900">Daftar Reservasi</h2>
+            <div className="flex gap-2">
+              {['all', 'pending', 'accepted', 'paid', 'completed'].map((s) => (
+                <button 
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    filter === s 
+                      ? 'bg-slate-900 text-white' 
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                  <th className="px-8 py-4">User</th>
+                  <th className="px-8 py-4">Stasiun & Tanggal</th>
+                  <th className="px-8 py-4">Waktu & Durasi</th>
+                  <th className="px-8 py-4">Status Reservasi</th>
+                  <th className="px-8 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {loading ? (
+                  <tr><td colSpan={5} className="p-20 text-center text-slate-500 font-bold">Loading data...</td></tr>
+                ) : filteredBookings.length === 0 ? (
+                  <tr><td colSpan={5} className="p-20 text-center text-slate-500 font-bold">Tidak ada data ditemukan.</td></tr>
+                ) : filteredBookings.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
+                          {booking.user.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">{booking.user.name}</p>
+                          <p className="text-xs text-slate-400 font-medium">{booking.user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="space-y-1">
+                        <p className="font-bold text-slate-700 flex items-center gap-1.5 text-sm">
+                          <Zap size={14} className="text-emerald-500" /> {booking.station?.name || 'Unknown'}
+                        </p>
+                        <p className="text-xs text-slate-400 font-medium">
+                          {booking.date}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="font-black text-slate-900">{booking.start_time}</p>
+                      <p className="text-xs text-slate-500 font-bold">{booking.duration} Menit</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col gap-2">
+                         <span className={`inline-flex items-center w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          booking.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          booking.status === 'accepted' ? 'bg-blue-100 text-blue-700' :
+                          booking.status === 'ready' ? 'bg-emerald-100 text-emerald-700' :
+                          booking.status === 'occupied' ? 'bg-emerald-600 text-white' :
+                          booking.status === 'completed' ? 'bg-slate-100 text-slate-700' :
+                          'bg-rose-100 text-rose-700'
+                        }`}>
+                          {booking.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex justify-end gap-2">
+                        <button className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg">
+                          <MoreVertical size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;

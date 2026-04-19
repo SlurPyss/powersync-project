@@ -25,4 +25,19 @@ class Station extends Model
         'reviews',
         'operating_hours',
     ];
+
+    public function slots()
+    {
+        return $this->hasMany(Slot::class);
+    }
+
+    public function queues()
+    {
+        return $this->hasMany(Queue::class);
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
 }

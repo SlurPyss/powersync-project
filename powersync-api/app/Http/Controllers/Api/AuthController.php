@@ -61,6 +61,70 @@ class AuthController extends Controller
         return response()->json(auth()->user());
     }
 
+    public function sendOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        // Generate 4 digit OTP
+        $otp = rand(1000, 9999);
+        $user->otp = $otp;
+        $user->otp_expires_at = now()->addMinutes(10);
+        $user->save();
+
+        // Simulate sending email/sms
+        \Illuminate\Support\Facades\Log::info("OTP for {$user->email} is: {$otp}");
+
+        return response()->json([
+            'message' => 'OTP berhasil dikirim. Silakan cek email/pesan Anda.',
+            // Only sending OTP back in response for testing purposes to make it "langsung bisa jalan" for user
+            'demo_otp' => $otp 
+        ]);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user = User::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->where('otp_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'OTP tidak valid atau sudah kedaluwarsa'
+            ], 401);
+        }
+
+        // Clear OTP
+        $user->otp = null;
+        $user->otp_expires_at = null;
+        $user->save();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Hi '.$user->name.', welcome back to PowerSync',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'data' => $user
+        ]);
+    }
+
     public function updateProfile(Request $request)
     {
         $user = auth()->user();

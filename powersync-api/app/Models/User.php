@@ -23,7 +23,13 @@ class User extends Authenticatable
         'phone',
         'vehicle_type',
         'plate_number',
+        'role',
     ];
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
 
     protected $hidden = [
         'password',

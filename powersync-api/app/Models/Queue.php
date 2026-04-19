@@ -5,26 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Booking extends Model
+class Queue extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'station_id',
-        'name',
-        'email',
-        'phone',
-        'vehicle_type',
-        'plate_number',
-        'connector',
-        'duration',
-        'notes',
-        'slot_id',
-        'date',
-        'start_time',
-        'end_time',
-        'check_in_time',
-        'status',
+        'position',
+        'request_time',
     ];
 
     public function user()
@@ -35,10 +24,5 @@ class Booking extends Model
     public function station()
     {
         return $this->belongsTo(Station::class);
-    }
-
-    public function slot()
-    {
-        return $this->belongsTo(Slot::class);
     }
 }
