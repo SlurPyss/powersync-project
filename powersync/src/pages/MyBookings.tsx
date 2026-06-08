@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useBooking } from '../context/BookingContext';
 import { 
   History, Clock, CheckCircle2, Zap, AlertCircle, 
-  Trash2, ExternalLink, Calendar, MapPin, BadgeCheck,
-  CreditCard, X, Upload, Check, Info, LogIn
+  Trash2, Calendar, MapPin, BadgeCheck, LogIn
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -47,6 +46,22 @@ const MyBookings: React.FC = () => {
     }
   };
 
+  const checkTimeStatus = (date: string, time: string) => {
+    try {
+      const start = new Date(`${date}T${time}`).getTime();
+      const now = new Date().getTime();
+
+      const minCheckIn = start - (15 * 60 * 1000); // 15 mins before
+      const maxCheckIn = start + (10 * 60 * 1000); // 10 mins after
+
+      if (now < minCheckIn) return 'early';
+      if (now > maxCheckIn) return 'late';
+      return 'window';
+    } catch (e) {
+      return 'early';
+    }
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen py-16">
       <div className="container mx-auto px-6">
@@ -66,6 +81,10 @@ const MyBookings: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             {bookings.map((booking) => {
               const StatusIcon = getStatusIcon(booking.status);
+              const timeStatus = checkTimeStatus(booking.startDate, booking.startTime);
+              const isActiveBooking = ['pending', 'accepted', 'ready'].includes(booking.status);
+              const isEligibleForCheckIn = isActiveBooking && timeStatus === 'window';
+
               return (
                 <div key={booking.id} className={`bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 hover:border-emerald-200 transition-all duration-300 group ${booking.status === 'completed' || booking.status === 'cancelled' ? 'opacity-70' : ''}`}>
                   <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
@@ -128,7 +147,7 @@ const MyBookings: React.FC = () => {
 
                     {/* Actions */}
                     <div className="lg:w-1/5 flex lg:flex-col gap-3 w-full">
-                       {booking.status === 'ready' && (
+                       {isEligibleForCheckIn && (
                          <button 
                             onClick={() => handleCheckIn(booking.id)}
                             disabled={loadingAction === booking.id}
@@ -138,19 +157,25 @@ const MyBookings: React.FC = () => {
                             {loadingAction === booking.id ? 'Memproses...' : 'Check-In'}
                          </button>
                        )}
-                       {booking.status === 'pending' || booking.status === 'accepted' ? (
+                       {isActiveBooking && timeStatus === 'early' && (
                          <div className="flex-1 bg-slate-100 text-slate-400 rounded-2xl py-3 font-bold text-xs flex items-center justify-center gap-2 text-center px-2">
                            <Clock size={16} />
                            Belum Masuk Waktu
                          </div>
-                       ) : null}
+                       )}
+                       {isActiveBooking && timeStatus === 'late' && (
+                         <div className="flex-1 bg-rose-50 text-rose-500 rounded-2xl py-3 font-bold text-xs flex items-center justify-center gap-2 text-center px-2">
+                           <AlertCircle size={16} />
+                           Waktu Habis
+                         </div>
+                       )}
                        
                        <button 
                         onClick={() => deleteBooking(booking.id)}
                         className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all border border-slate-100 flex items-center justify-center gap-2 font-bold text-sm"
                        >
                          <Trash2 size={18} />
-                         {booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'rejected' ? 'Hapus Riwayat' : 'Batalkan Reservasi'}
+                         {booking.status === 'completed' || booking.status === 'cancelled' ? 'Hapus Riwayat' : 'Batalkan Reservasi'}
                        </button>
                     </div>
 

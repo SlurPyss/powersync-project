@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import TopsisReport from './pages/TopsisReport';
 
 const App: React.FC = () => {
   return (
@@ -33,6 +34,7 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/topsis-report" element={<TopsisReport />} />
               </Routes>
             </main>
             <Footer />

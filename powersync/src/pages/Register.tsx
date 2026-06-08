@@ -35,7 +35,7 @@ const Register: React.FC = () => {
       }
 
       login(access_token, data);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err: any) {
       console.error('Registration error:', err);
       if (err.response?.status === 500) {

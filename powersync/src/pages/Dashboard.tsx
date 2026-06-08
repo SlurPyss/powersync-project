@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
   const kpiStats = [
     { 
       label: 'Total Revenue', 
-      value: stats ? `Rp ${(stats.totalRevenue / 1000000).toFixed(1)}jt` : 'Rp 0', 
+      value: stats ? `Rp ${((stats.totalRevenue || 0) / 1000000).toFixed(1)}jt` : 'Rp 0', 
       change: '+12.5%', 
       icon: DollarSign, 
       color: 'text-emerald-600', 
@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
     },
     { 
       label: 'Total Energy', 
-      value: stats ? `${stats.totalEnergy.toLocaleString()} kWh` : '0 kWh', 
+      value: stats ? `${(stats.totalEnergy || 0).toLocaleString()} kWh` : '0 kWh', 
       change: '+8.2%', 
       icon: Zap, 
       color: 'text-blue-600', 
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
     },
     { 
       label: 'Total Bookings', 
-      value: stats ? stats.totalBookings.toLocaleString() : '0', 
+      value: stats ? (stats.totalBookings || 0).toLocaleString() : '0', 
       change: '+15.1%', 
       icon: Users, 
       color: 'text-purple-600', 

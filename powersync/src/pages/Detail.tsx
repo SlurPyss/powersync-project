@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, MapPin, Zap, Star, Clock, Shield, Wifi, Coffee, 
-  ParkingCircle, Calculator, BadgeCheck 
+  ParkingCircle, BadgeCheck, User, CheckCircle2 
 } from 'lucide-react';
 import { useBooking } from '../context/BookingContext';
 import { useAuth } from '../context/AuthContext';
-import type { Booking } from '../types';
 
 const Detail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +27,8 @@ const Detail: React.FC = () => {
     duration: 30,
     notes: '',
   });
+
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Auto-fill from user profile
   useEffect(() => {
@@ -78,8 +79,10 @@ const Detail: React.FC = () => {
         stationId: station.id,
         ...formData,
       });
-      alert('Permintaan Reservasi berhasil! Jika slot penuh, Anda akan otomatis masuk ke antrean. Menuju halaman jadwal...');
-      navigate('/my-bookings');
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate('/my-bookings');
+      }, 3000);
     } catch (e: any) {
       alert(e.response?.data?.message || 'Gagal melakukan reservasi.');
     }
@@ -212,9 +215,46 @@ const Detail: React.FC = () => {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              {!user ? (
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8 text-center space-y-4 shadow-inner">
+                  <div className="bg-white w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto shadow-md border border-slate-100 group-hover:scale-110 transition-transform">
+                    <User size={36} className="text-emerald-600" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-black text-slate-900">Login Diperlukan</h4>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                      Anda harus masuk atau membuat akun terlebih dahulu untuk dapat memesan slot pengisian daya.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 pt-6">
+                    <Link to="/login" className="btn-primary w-full text-center">Masuk ke Akun</Link>
+                    <Link to="/register" className="btn-secondary w-full text-center">Daftar Akun Baru</Link>
+                  </div>
+                </div>
+              ) : user?.role === 'admin' ? (
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8 text-center space-y-4">
+                  <Shield size={48} className="text-slate-400 mx-auto" />
+                  <h4 className="text-xl font-bold text-slate-800">Administrator Terdeteksi</h4>
+                  <p className="text-sm text-slate-500 font-medium">
+                    Akun administrator hanya memiliki akses ke Dashboard. Anda tidak dapat melakukan reservasi slot menggunakan akun ini.
+                  </p>
+                </div>
+              ) : showSuccess ? (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-10 text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-sm">
+                  <div className="bg-emerald-600 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-200 animate-bounce">
+                    <CheckCircle2 size={48} className="text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-2xl font-black text-emerald-900 tracking-tight">Reservasi Berhasil!</h4>
+                    <p className="text-emerald-700 font-medium leading-relaxed">
+                      Slot Anda telah diamankan. Mengarahkan Anda ke halaman Manajemen Terjadwal dalam beberapa detik...
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                        <label className="text-sm font-bold text-slate-700 ml-1">Nama Lengkap</label>
                        <input
@@ -240,7 +280,7 @@ const Detail: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                        <label className="text-sm font-bold text-slate-700 ml-1">Email</label>
                        <input
@@ -268,7 +308,7 @@ const Detail: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                        <label className="text-sm font-bold text-slate-700 ml-1">Nomor Plat</label>
                        <input
@@ -280,9 +320,6 @@ const Detail: React.FC = () => {
                         onChange={handleInputChange}
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
                        <label className="text-sm font-bold text-slate-700 ml-1">Tipe Connector</label>
                        <select
@@ -293,19 +330,6 @@ const Detail: React.FC = () => {
                       >
                         {station.connectors.map(c => (
                           <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-sm font-bold text-slate-700 ml-1">Durasi (Menit)</label>
-                       <select
-                        name="duration"
-                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
-                        value={formData.duration}
-                        onChange={handleInputChange}
-                      >
-                        {[15, 30, 45, 60, 90, 120].map(d => (
-                          <option key={d} value={d}>{d} Menit</option>
                         ))}
                       </select>
                     </div>
@@ -366,6 +390,7 @@ const Detail: React.FC = () => {
                   *Dengan mengonfirmasi, Anda menyetujui syarat dan ketentuan penggunaan fasilitas PowerSync di area {station.name}.
                 </p>
               </form>
+              )}
             </div>
           </div>
 
