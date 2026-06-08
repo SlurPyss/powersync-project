@@ -3,16 +3,44 @@ import {
   BarChart, CheckCircle, Database, Calculator, TrendingUp, Settings, MapPin, 
   Clock, DollarSign, BatteryCharging, PlusCircle
 } from 'lucide-react';
+import { useBooking } from '../context/BookingContext';
 
 const TopsisReport: React.FC = () => {
-  // Dummy Data matched to User's request
-  const stations = [
-    { id: 'A1', name: 'SPKLU Batam Center', location: 'Batam Center', jarak: 2.5, biaya: 25000, waktu: 15, daya: 150 },
-    { id: 'A2', name: 'EV Station Nagoya', location: 'Nagoya', jarak: 4.0, biaya: 30000, waktu: 10, daya: 50 },
-    { id: 'A3', name: 'Green Charging Sekupang', location: 'Sekupang', jarak: 7.0, biaya: 20000, waktu: 30, daya: 22 },
-    { id: 'A4', name: 'Smart Charging Batu Aji', location: 'Batu Aji', jarak: 8.0, biaya: 15000, waktu: 5, daya: 200 },
-    { id: 'A5', name: 'Quick Charge Bengkong', location: 'Bengkong', jarak: 5.5, biaya: 35000, waktu: 20, daya: 100 },
+  const { userCoords } = useBooking();
+
+  // Helper function to calculate Haversine distance
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // radius bumi dalam km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Base Data with representative Batam coordinates
+  const baseStations = [
+    { id: 'A1', name: 'SPKLU Batam Center', location: 'Batam Center', defaultJarak: 2.5, biaya: 25000, waktu: 15, daya: 150, lat: 1.1278, lng: 104.0531 },
+    { id: 'A2', name: 'EV Station Nagoya', location: 'Nagoya', defaultJarak: 4.0, biaya: 30000, waktu: 10, daya: 50, lat: 1.1437, lng: 104.0152 },
+    { id: 'A3', name: 'Green Charging Sekupang', location: 'Sekupang', defaultJarak: 7.0, biaya: 20000, waktu: 30, daya: 22, lat: 1.1190, lng: 103.9450 },
+    { id: 'A4', name: 'Smart Charging Batu Aji', location: 'Batu Aji', defaultJarak: 8.0, biaya: 15000, waktu: 5, daya: 200, lat: 1.0450, lng: 103.9850 },
+    { id: 'A5', name: 'Quick Charge Bengkong', location: 'Bengkong', defaultJarak: 5.5, biaya: 35000, waktu: 20, daya: 100, lat: 1.1550, lng: 104.0320 },
   ];
+
+  // Dynamically recalculate C1 (Jarak) based on Geolocation API if available
+  const stations = baseStations.map(s => {
+    let jarak = s.defaultJarak;
+    if (userCoords) {
+      const dist = calculateDistance(userCoords.latitude, userCoords.longitude, s.lat, s.lng);
+      jarak = parseFloat(dist.toFixed(2));
+    }
+    return { ...s, jarak };
+  });
 
   const criteria = [
     { id: 'C1', name: 'Jarak (km)', type: 'Cost', weight: 30 },
@@ -21,40 +49,79 @@ const TopsisReport: React.FC = () => {
     { id: 'C4', name: 'Kapasitas Daya (kW)', type: 'Benefit', weight: 25 },
   ];
 
-  // Matriks Keputusan sudah diwakili oleh data stasiun di atas.
+  const weights = [0.30, 0.25, 0.20, 0.25]; // C1, C2, C3, C4 weights
+  const isBenefit = [false, false, false, true]; // Cost cost cost benefit
 
-  // Data Normalisasi Ternormalisasi (R)
-  const normalisasi = [
-    [0.1943, 0.4303, 0.3693, 0.5460],
-    [0.3109, 0.5164, 0.2462, 0.1820],
-    [0.5441, 0.3443, 0.7385, 0.0801],
-    [0.6219, 0.2582, 0.1231, 0.7280],
-    [0.4275, 0.6025, 0.4924, 0.3640],
-  ];
+  // 1. Calculate Dividers
+  const dividers = Array(4).fill(0);
+  for (let j = 0; j < 4; j++) {
+    let sumSq = 0;
+    for (let i = 0; i < stations.length; i++) {
+      const val = j === 0 ? stations[i].jarak :
+                  j === 1 ? stations[i].biaya :
+                  j === 2 ? stations[i].waktu :
+                  stations[i].daya;
+      sumSq += Math.pow(val, 2);
+    }
+    dividers[j] = Math.sqrt(sumSq);
+  }
 
-  // Matriks Ternormalisasi Terbobot (Y)
-  const terbobot = [
-    [0.0583, 0.1076, 0.0739, 0.1365],
-    [0.0933, 0.1291, 0.0492, 0.0455],
-    [0.1632, 0.0861, 0.1477, 0.0200],
-    [0.1866, 0.0645, 0.0246, 0.1820],
-    [0.1283, 0.1506, 0.0985, 0.0910],
-  ];
+  // 2. Normalized Matrix (R)
+  const normalisasi = stations.map(s => {
+    return [
+      s.jarak / dividers[0],
+      s.biaya / dividers[1],
+      s.waktu / dividers[2],
+      s.daya / dividers[3]
+    ];
+  });
+
+  // 3. Weighted Normalized Matrix (Y)
+  const terbobot = normalisasi.map(row => {
+    return row.map((val, j) => val * weights[j]);
+  });
+
+  // 4. Positive and Negative Ideal Solutions (A+ / A-)
+  const A_plus: number[] = [];
+  const A_minus: number[] = [];
+  for (let j = 0; j < 4; j++) {
+    const colVals = terbobot.map(row => row[j]);
+    if (isBenefit[j]) {
+      A_plus.push(Math.max(...colVals));
+      A_minus.push(Math.min(...colVals));
+    } else {
+      A_plus.push(Math.min(...colVals));
+      A_minus.push(Math.max(...colVals));
+    }
+  }
 
   const ideal = {
-    positif: [0.0583, 0.0645, 0.0246, 0.1820], // C1 min, C2 min, C3 min, C4 max
-    negatif: [0.1866, 0.1506, 0.1477, 0.0200], // C1 max, C2 max, C3 max, C4 min
+    positif: A_plus,
+    negatif: A_minus
   };
 
-  const rawPreferensi = [
-    { id: 'A1', name: 'SPKLU Batam Center', dPlus: 0.0797, dMin: 0.1932, v: 0.7080 },
-    { id: 'A2', name: 'EV Station Nagoya', dPlus: 0.1569, dMin: 0.1397, v: 0.4709 },
-    { id: 'A3', name: 'Green Charging Sekupang', dPlus: 0.2299, dMin: 0.0686, v: 0.2299 },
-    { id: 'A4', name: 'Smart Charging Batu Aji', dPlus: 0.1283, dMin: 0.2209, v: 0.6327 },
-    { id: 'A5', name: 'Quick Charge Bengkong', dPlus: 0.1614, dMin: 0.1042, v: 0.3924 },
-  ].sort((a, b) => b.v - a.v);
+  // 5. Jarak Ideal D+ & D- and Preference Value (V)
+  const rawPreferensi = stations.map((s, i) => {
+    let dPlusSq = 0;
+    let dMinusSq = 0;
+    for (let j = 0; j < 4; j++) {
+      dPlusSq += Math.pow(terbobot[i][j] - A_plus[j], 2);
+      dMinusSq += Math.pow(terbobot[i][j] - A_minus[j], 2);
+    }
+    const dPlus = Math.sqrt(dPlusSq);
+    const dMin = Math.sqrt(dMinusSq);
+    const v = dMin / (dPlus + dMin);
+    return {
+      id: s.id,
+      name: s.name,
+      dPlus,
+      dMin: dMin,
+      v
+    };
+  });
 
-  const preferensi = rawPreferensi.map((p, index) => ({ ...p, rank: index + 1 }));
+  const sortedPreferensi = [...rawPreferensi].sort((a, b) => b.v - a.v);
+  const preferensi = sortedPreferensi.map((p, index) => ({ ...p, rank: index + 1 }));
   const bestStation = preferensi[0];
 
   return (

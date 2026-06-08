@@ -1,10 +1,13 @@
 import type { Station } from '../types';
 
+// Koordinat representatif untuk lokasi stasiun di Batam
 export const mockStations: Station[] = [
   {
-    id: 'st-01',
+    id: 'A1',
     name: 'PowerSync Nagoya Hill',
     location: 'Jl. Teuku Umar, Lubuk Baja, Batam',
+    address: 'Jl. Teuku Umar, Lubuk Baja, Batam',
+    area: 'Nagoya Hill / Lubuk Baja',
     type: 'Ultra Fast',
     power: '350kW',
     connectors: ['CCS2', 'CHAdeMO'],
@@ -13,12 +16,17 @@ export const mockStations: Station[] = [
     facilities: ['Parking', 'Cafe', 'WiFi', 'Restroom', 'Mall Access'],
     operatingHours: '08:00 - 22:00',
     rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1437,
+    longitude: 104.0152,
+    distance: null
   },
   {
-    id: 'st-02',
+    id: 'A2',
     name: 'PowerSync Batam Centre',
     location: 'Mega Mall Batam Centre, Engku Putri',
+    address: 'Mega Mall Batam Centre, Engku Putri',
+    area: 'Batam Centre',
     type: 'Super Fast',
     power: '150kW',
     connectors: ['CCS2', 'Type 2'],
@@ -27,12 +35,17 @@ export const mockStations: Station[] = [
     facilities: ['Parking', 'Security', 'WiFi', 'Cinema'],
     operatingHours: '10:00 - 21:00',
     rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1278,
+    longitude: 104.0531,
+    distance: null
   },
   {
-    id: 'st-03',
+    id: 'A3',
     name: 'PowerSync Harbour Bay',
-    location: 'Batu Ampar, Ferry Terminal Area',
+    location: 'Batu Ampar, Ferry Terminal Area, Batam',
+    address: 'Batu Ampar, Ferry Terminal Area, Batam',
+    area: 'Harbour Bay / Batu Ampar',
     type: 'Fast',
     power: '50kW',
     connectors: ['CCS2', 'CHAdeMO', 'Type 2'],
@@ -41,12 +54,17 @@ export const mockStations: Station[] = [
     facilities: ['Parking', 'Seafood Restaurant', 'Ferry Access', 'Security'],
     operatingHours: '24 Hours',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1512,
+    longitude: 104.0125,
+    distance: null
   },
   {
-    id: 'st-04',
+    id: 'A4',
     name: 'PowerSync Grand Batam',
     location: 'Penuin, Lubuk Baja, Batam',
+    address: 'Penuin, Lubuk Baja, Batam',
+    area: 'Grand Batam Mall / Penuin',
     type: 'Ultra Fast',
     power: '350kW',
     connectors: ['CCS2', 'GB/T'],
@@ -55,12 +73,17 @@ export const mockStations: Station[] = [
     facilities: ['Premium Parking', 'Cafe', 'WiFi', 'Restroom', 'Supermarket'],
     operatingHours: '10:00 - 22:00',
     rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1309,
+    longitude: 104.0108,
+    distance: null
   },
   {
-    id: 'st-05',
+    id: 'A5',
     name: 'PowerSync BCS Mall',
     location: 'Jl. Bunga Raya, Baloi, Batam',
+    address: 'Jl. Bunga Raya, Baloi, Batam',
+    area: 'BCS Mall / Baloi',
     type: 'Regular',
     power: '22kW',
     connectors: ['Type 2'],
@@ -69,12 +92,17 @@ export const mockStations: Station[] = [
     facilities: ['Parking', 'Restroom', 'Food Court'],
     operatingHours: '10:00 - 21:00',
     rating: 4.3,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1306,
+    longitude: 104.0028,
+    distance: null
   },
   {
-    id: 'st-06',
+    id: 'A6',
     name: 'PowerSync Kepri Mall',
     location: 'Simpang Kabil, Batam Centre',
+    address: 'Simpang Kabil, Batam Centre',
+    area: 'Kepri Mall / Simpang Kabil',
     type: 'Super Fast',
     power: '150kW',
     connectors: ['CCS2', 'CHAdeMO'],
@@ -83,6 +111,9 @@ export const mockStations: Station[] = [
     facilities: ['Parking', 'WiFi', 'Cafe', 'Restroom'],
     operatingHours: '10:00 - 22:00',
     rating: 4.5,
-    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'
+    image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000',
+    latitude: 1.1098,
+    longitude: 104.0384,
+    distance: null
   }
 ];

@@ -16,6 +16,11 @@ export interface Station {
   operatingHours: string;
   rating: number;
   image: string;
+  address?: string;
+  area?: string;
+  latitude?: number;
+  longitude?: number;
+  distance?: number | null;
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'ready' | 'occupied' | 'completed' | 'cancelled';

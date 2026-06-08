@@ -10,7 +10,14 @@ import {
 } from 'lucide-react';
 
 const Home: React.FC = () => {
-  const { stations } = useBooking();
+  const { 
+    stations, 
+    userCoords, 
+    isGpsActive, 
+    gpsError, 
+    requestUserLocation, 
+    resetLocation 
+  } = useBooking();
   const location = useLocation();
 
   // Scroll to section based on hash in URL
@@ -26,8 +33,9 @@ const Home: React.FC = () => {
   }, [location]);
 
   // Section 3: Interactive Map States
-  const [selectedStationId, setSelectedStationId] = useState<string>('st-01');
+  const [selectedStationId, setSelectedStationId] = useState<string>('A1');
   const [stationFilter, setStationFilter] = useState<string>('all');
+  const [loadingGps, setLoadingGps] = useState<boolean>(false);
 
   // Section 5: Experience Tabs State
   const [activeTab, setActiveTab] = useState<'search' | 'booking' | 'monitoring'>('search');
@@ -43,7 +51,7 @@ const Home: React.FC = () => {
   }, [batterySize, selectedStationId, stations]);
 
   // Filter stations for Section 3
-  const filteredStations = stations.filter(station => {
+  const filteredStations = [...stations].filter(station => {
     if (stationFilter === 'fast') {
       return station.type.toLowerCase().includes('fast') || parseInt(station.power) >= 150;
     }
@@ -51,11 +59,15 @@ const Home: React.FC = () => {
       return station.slots.available > 0;
     }
     if (stationFilter === 'near') {
-      // simulate nearby by taking the first 3
-      return ['st-01', 'st-02', 'st-04'].includes(station.id);
+      return ['A1', 'A2', 'A4'].includes(station.id);
     }
     return true;
   });
+
+  // Sort by nearest if GPS is active
+  const sortedStations = isGpsActive 
+    ? [...filteredStations].sort((a, b) => (a.distance || 999) - (b.distance || 999))
+    : filteredStations;
 
   const selectedStation = stations.find(s => s.id === selectedStationId) || stations[0];
 
@@ -372,48 +384,95 @@ const Home: React.FC = () => {
               <p className="text-slate-500 text-sm md:text-base max-w-2xl">Lihat slot pengisian yang tersedia, estimasi tarif per kWh, dan jenis konektor yang didukung di setiap titik.</p>
             </div>
             
-            {/* Interactive Filters */}
-            <div className="flex flex-wrap gap-2">
-              <button 
-                onClick={() => setStationFilter('all')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                  stationFilter === 'all' 
-                    ? 'bg-slate-900 text-white border-slate-900' 
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                Semua Stasiun
-              </button>
-              <button 
-                onClick={() => setStationFilter('fast')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                  stationFilter === 'fast' 
-                    ? 'bg-slate-900 text-white border-slate-900' 
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                Fast Charging
-              </button>
-              <button 
-                onClick={() => setStationFilter('available')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                  stationFilter === 'available' 
-                    ? 'bg-slate-900 text-white border-slate-900' 
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                Tersedia Sekarang
-              </button>
-              <button 
-                onClick={() => setStationFilter('near')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                  stationFilter === 'near' 
-                    ? 'bg-slate-900 text-white border-slate-900' 
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                Dekat Saya
-              </button>
+            {/* Interactive Filters & GPS Controls */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              {/* Geolocation Button & Badges */}
+              <div className="flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto">
+                <div className="flex gap-2 items-center">
+                  {isGpsActive ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-lg shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      Lokasi GPS Aktif
+                    </span>
+                  ) : userCoords ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-lg shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Lokasi Default
+                    </span>
+                  ) : null}
+
+                  {isGpsActive || userCoords ? (
+                    <button 
+                      onClick={resetLocation}
+                      className="px-3 py-1.5 text-xs font-bold bg-white text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-lg transition-colors cursor-pointer shadow-sm"
+                    >
+                      Reset
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={async () => {
+                        setLoadingGps(true);
+                        await requestUserLocation();
+                        setLoadingGps(false);
+                      }}
+                      disabled={loadingGps}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-100 hover:scale-[1.02] cursor-pointer disabled:opacity-50"
+                    >
+                      <MapPin size={14} className={loadingGps ? 'animate-bounce' : ''} />
+                      {loadingGps ? 'Mengambil GPS...' : 'Gunakan Lokasi Saya'}
+                    </button>
+                  )}
+                </div>
+                {gpsError && (
+                  <span className="text-[10px] text-amber-600 font-bold max-w-xs sm:text-right leading-none">
+                    {gpsError}
+                  </span>
+                )}
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-wrap gap-1.5">
+                <button 
+                  onClick={() => setStationFilter('all')}
+                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                    stationFilter === 'all' 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button 
+                  onClick={() => setStationFilter('fast')}
+                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                    stationFilter === 'fast' 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  Fast Charging
+                </button>
+                <button 
+                  onClick={() => setStationFilter('available')}
+                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                    stationFilter === 'available' 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  Tersedia
+                </button>
+                <button 
+                  onClick={() => setStationFilter('near')}
+                  className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                    stationFilter === 'near' 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  Dekat Saya
+                </button>
+              </div>
             </div>
           </div>
 
@@ -432,75 +491,75 @@ const Home: React.FC = () => {
                   <path d="M0,300 Q350,150 800,200" fill="none" stroke="currentColor" strokeWidth="5" />
                   
                   {/* Glowing Connection lines from Selected Station */}
-                  {selectedStationId === 'st-01' && <circle cx="340" cy="180" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'st-02' && <circle cx="480" cy="280" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'st-03' && <circle cx="210" cy="320" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'st-04' && <circle cx="580" cy="120" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
+                  {selectedStationId === 'A1' && <circle cx="340" cy="180" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
+                  {selectedStationId === 'A2' && <circle cx="480" cy="280" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
+                  {selectedStationId === 'A3' && <circle cx="210" cy="320" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
+                  {selectedStationId === 'A4' && <circle cx="580" cy="120" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
                 </svg>
 
                 {/* Live Markers plotted dynamically from data */}
-                {/* st-01 Marker */}
+                {/* A1 Marker */}
                 <div 
-                  onClick={() => setSelectedStationId('st-01')}
+                  onClick={() => setSelectedStationId('A1')}
                   className="absolute top-[38%] left-[48%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'st-01' 
+                    selectedStationId === 'A1' 
                       ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
                       : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
                   }`}>
-                    <Zap size={14} className={selectedStationId === 'st-01' ? 'text-white' : 'text-slate-400'} />
+                    <Zap size={14} className={selectedStationId === 'A1' ? 'text-white' : 'text-slate-400'} />
                   </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                     Nagoya Hill
                   </div>
                 </div>
 
-                {/* st-02 Marker */}
+                {/* A2 Marker */}
                 <div 
-                  onClick={() => setSelectedStationId('st-02')}
+                  onClick={() => setSelectedStationId('A2')}
                   className="absolute top-[58%] left-[68%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'st-02' 
+                    selectedStationId === 'A2' 
                       ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
                       : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
                   }`}>
-                    <Zap size={14} className={selectedStationId === 'st-02' ? 'text-white' : 'text-slate-400'} />
+                    <Zap size={14} className={selectedStationId === 'A2' ? 'text-white' : 'text-slate-400'} />
                   </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                     Batam Centre
                   </div>
                 </div>
 
-                {/* st-03 Marker */}
+                {/* A3 Marker */}
                 <div 
-                  onClick={() => setSelectedStationId('st-03')}
+                  onClick={() => setSelectedStationId('A3')}
                   className="absolute top-[68%] left-[30%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'st-03' 
+                    selectedStationId === 'A3' 
                       ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
                       : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
                   }`}>
-                    <Zap size={14} className={selectedStationId === 'st-03' ? 'text-white' : 'text-slate-400'} />
+                    <Zap size={14} className={selectedStationId === 'A3' ? 'text-white' : 'text-slate-400'} />
                   </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                     Harbour Bay
                   </div>
                 </div>
 
-                {/* st-04 Marker */}
+                {/* A4 Marker */}
                 <div 
-                  onClick={() => setSelectedStationId('st-04')}
+                  onClick={() => setSelectedStationId('A4')}
                   className="absolute top-[26%] left-[82%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'st-04' 
+                    selectedStationId === 'A4' 
                       ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
                       : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
                   }`}>
-                    <Zap size={14} className={selectedStationId === 'st-04' ? 'text-white' : 'text-slate-400'} />
+                    <Zap size={14} className={selectedStationId === 'A4' ? 'text-white' : 'text-slate-400'} />
                   </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                     Grand Batam
@@ -545,7 +604,7 @@ const Home: React.FC = () => {
 
             {/* Right: Station List with Status Pills */}
             <div className="lg:col-span-5 flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-1">
-              {filteredStations.map(station => {
+              {sortedStations.map(station => {
                 const isSelected = station.id === selectedStationId;
                 const isAvailable = station.slots.available > 0;
                 
@@ -562,7 +621,17 @@ const Home: React.FC = () => {
                     <div className="flex justify-between items-start gap-4">
                       <div>
                         <h4 className="text-sm font-extrabold text-slate-900 mb-1 group-hover:text-emerald-600">{station.name}</h4>
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-2">{station.location}</p>
+                        <p className="text-xs text-slate-500 line-clamp-1 mb-1">{station.location}</p>
+                        {station.distance !== null && station.distance !== undefined ? (
+                          <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                            <MapPin size={11} className="text-emerald-500" />
+                            Jarak dari lokasimu: {station.distance.toFixed(1)} km
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 italic">
+                            Aktifkan lokasi untuk melihat jarak
+                          </p>
+                        )}
                       </div>
                       
                       {/* Status pill */}

@@ -3,6 +3,13 @@ import axios from 'axios';
 import type { Station, Booking, ChargerType, BookingStatus } from '../types';
 import { mockStations } from '../data/mockData';
 import { useAuth } from './AuthContext';
+import { calculateDistance } from '../utils/distance';
+
+export const DEFAULT_USER_LOCATION = {
+  latitude: 1.1265,
+  longitude: 104.0539,
+  label: "Batam Centre Default Location"
+};
 
 interface BookingContextType {
   stations: Station[];
@@ -13,6 +20,11 @@ interface BookingContextType {
   isLoading: boolean;
   checkIn: (bookingId: string) => Promise<any>;
   refreshBookings: () => Promise<void>;
+  userCoords: { latitude: number; longitude: number } | null;
+  isGpsActive: boolean;
+  gpsError: string | null;
+  requestUserLocation: () => Promise<boolean>;
+  resetLocation: () => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -22,6 +34,11 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [stations, setStations] = useState<Station[]>(mockStations);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Geolocation States
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isGpsActive, setIsGpsActive] = useState<boolean>(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
 
   const API_BASE_URL = 'http://127.0.0.1:8001/api';
 
@@ -158,9 +175,68 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Geolocation Handler
+  const requestUserLocation = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        setGpsError('Browser Anda tidak mendukung fitur lokasi.');
+        setUserCoords(DEFAULT_USER_LOCATION);
+        setIsGpsActive(false);
+        resolve(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          setUserCoords(coords);
+          setIsGpsActive(true);
+          setGpsError(null);
+          resolve(true);
+        },
+        (error) => {
+          console.warn('GPS access denied or failed:', error);
+          setGpsError('Akses lokasi ditolak. Sistem menggunakan lokasi default Batam Centre.');
+          setUserCoords(DEFAULT_USER_LOCATION);
+          setIsGpsActive(false);
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    });
+  };
+
+  const resetLocation = () => {
+    setUserCoords(null);
+    setIsGpsActive(false);
+    setGpsError(null);
+    // Restore default mock stations distances to null
+    setStations((prev) => prev.map(s => ({ ...s, distance: null })));
+  };
+
+  // Recalculate distances on userCoords changes
+  useEffect(() => {
+    if (userCoords) {
+      setStations((prevStations) =>
+        prevStations.map((station) => {
+          const lat = station.latitude || 0;
+          const lon = station.longitude || 0;
+          const dist = calculateDistance(userCoords.latitude, userCoords.longitude, lat, lon);
+          return { ...station, distance: parseFloat(dist.toFixed(2)) };
+        })
+      );
+    }
+  }, [userCoords]);
+
   return (
     <BookingContext.Provider
-      value={{ stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, checkIn, refreshBookings }}
+      value={{ 
+        stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, checkIn, refreshBookings,
+        userCoords, isGpsActive, gpsError, requestUserLocation, resetLocation
+      }}
     >
       {children}
     </BookingContext.Provider>

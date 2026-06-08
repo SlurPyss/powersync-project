@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 const Detail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stations, addBooking } = useBooking();
+  const { stations, addBooking, isGpsActive } = useBooking();
   const { user } = useAuth();
   
   const station = useMemo(() => stations.find((s) => s.id === id), [stations, id]);
@@ -141,6 +141,25 @@ const Detail: React.FC = () => {
                       <MapPin size={20} className="text-emerald-500" />
                       {station.location}
                     </div>
+                    {station.distance !== null && station.distance !== undefined ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-lg shadow-sm">
+                          <MapPin size={12} className="text-emerald-600" />
+                          Jarak dari lokasimu: {station.distance.toFixed(1)} km
+                        </span>
+                        <span className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border shadow-sm ${
+                          isGpsActive 
+                            ? 'bg-emerald-500/15 text-emerald-800 border-emerald-200' 
+                            : 'bg-amber-500/15 text-amber-800 border-amber-200'
+                        }`}>
+                          {isGpsActive ? '🟢 Lokasi GPS Aktif' : '🟡 Menggunakan Lokasi Default'}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic pt-1">
+                        Aktifkan lokasi di halaman beranda atau katalog untuk menghitung jarak.
+                      </p>
+                    )}
                   </div>
                   <div className="bg-emerald-50 px-6 py-4 rounded-3xl border border-emerald-100 text-center">
                     <div className="flex items-center justify-center gap-2 text-emerald-600 font-extrabold mb-1">
@@ -213,6 +232,20 @@ const Detail: React.FC = () => {
                   <h3 className="text-2xl font-bold text-slate-900">Reservasi Slot</h3>
                   <p className="text-sm text-slate-500 font-medium">Pilih periode waktu & slot charging Anda.</p>
                 </div>
+              </div>
+
+              {/* Station summary with distance inside Booking form card */}
+              <div className="bg-slate-50 border border-slate-250/60 p-4 rounded-2xl mb-6 flex justify-between items-center text-xs font-bold">
+                <div>
+                  <span className="text-slate-400 block text-[9px] uppercase font-bold tracking-wide">Stasiun Tujuan</span>
+                  <span className="text-slate-900">{station.name}</span>
+                </div>
+                {station.distance !== null && station.distance !== undefined && (
+                  <div className="text-right">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold tracking-wide">Estimasi Jarak</span>
+                    <span className="text-emerald-700">{station.distance.toFixed(1)} km</span>
+                  </div>
+                )}
               </div>
 
               {!user ? (
