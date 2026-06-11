@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBooking } from '../context/BookingContext';
+import { Map } from '../components/ui/map';
 import { 
   Zap, Battery, ChevronRight, 
   MapPin, CheckCircle, Search,
   Calendar, QrCode, Clock, Navigation,
   DollarSign, History, TrendingUp, Sliders,
-  Star, Check, Activity, Info
+  Check, Activity, Info
 } from 'lucide-react';
+
 
 const Home: React.FC = () => {
   const { 
@@ -69,7 +71,7 @@ const Home: React.FC = () => {
     ? [...filteredStations].sort((a, b) => (a.distance || 999) - (b.distance || 999))
     : filteredStations;
 
-  const selectedStation = stations.find(s => s.id === selectedStationId) || stations[0];
+
 
   return (
     <div className="flex flex-col bg-[#f8faf7] min-h-screen text-slate-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
@@ -478,128 +480,21 @@ const Home: React.FC = () => {
 
           <div className="grid lg:grid-cols-12 gap-8 items-stretch">
             {/* Left: Map Preview Dashboard */}
-            <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-4 flex flex-col min-h-[450px] relative overflow-hidden shadow-xl">
-              {/* Map Canvas Visual */}
-              <div className="absolute inset-0 bg-slate-950 opacity-95">
-                {/* SVG Route Mesh Grid */}
-                <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:25px_25px]" />
-                
-                <svg className="absolute inset-0 w-full h-full text-slate-800/60" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M-20,100 L800,450" fill="none" stroke="currentColor" strokeWidth="4" />
-                  <path d="M150,0 Q180,200 80,450" fill="none" stroke="currentColor" strokeWidth="3" />
-                  <path d="M400,0 L350,500" fill="none" stroke="currentColor" strokeWidth="2" />
-                  <path d="M0,300 Q350,150 800,200" fill="none" stroke="currentColor" strokeWidth="5" />
-                  
-                  {/* Glowing Connection lines from Selected Station */}
-                  {selectedStationId === 'A1' && <circle cx="340" cy="180" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'A2' && <circle cx="480" cy="280" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'A3' && <circle cx="210" cy="320" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                  {selectedStationId === 'A4' && <circle cx="580" cy="120" r="40" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />}
-                </svg>
-
-                {/* Live Markers plotted dynamically from data */}
-                {/* A1 Marker */}
-                <div 
-                  onClick={() => setSelectedStationId('A1')}
-                  className="absolute top-[38%] left-[48%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
-                >
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'A1' 
-                      ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
-                      : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
-                  }`}>
-                    <Zap size={14} className={selectedStationId === 'A1' ? 'text-white' : 'text-slate-400'} />
-                  </div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    Nagoya Hill
-                  </div>
-                </div>
-
-                {/* A2 Marker */}
-                <div 
-                  onClick={() => setSelectedStationId('A2')}
-                  className="absolute top-[58%] left-[68%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
-                >
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'A2' 
-                      ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
-                      : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
-                  }`}>
-                    <Zap size={14} className={selectedStationId === 'A2' ? 'text-white' : 'text-slate-400'} />
-                  </div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    Batam Centre
-                  </div>
-                </div>
-
-                {/* A3 Marker */}
-                <div 
-                  onClick={() => setSelectedStationId('A3')}
-                  className="absolute top-[68%] left-[30%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
-                >
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'A3' 
-                      ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
-                      : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
-                  }`}>
-                    <Zap size={14} className={selectedStationId === 'A3' ? 'text-white' : 'text-slate-400'} />
-                  </div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    Harbour Bay
-                  </div>
-                </div>
-
-                {/* A4 Marker */}
-                <div 
-                  onClick={() => setSelectedStationId('A4')}
-                  className="absolute top-[26%] left-[82%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 group"
-                >
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selectedStationId === 'A4' 
-                      ? 'bg-emerald-600 border-white scale-125 shadow-lg shadow-emerald-500/40' 
-                      : 'bg-slate-800 border-slate-600 hover:border-emerald-500'
-                  }`}>
-                    <Zap size={14} className={selectedStationId === 'A4' ? 'text-white' : 'text-slate-400'} />
-                  </div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[8px] text-white font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    Grand Batam
-                  </div>
-                </div>
-              </div>
-
-              {/* Map Floating UI Details */}
-              <div className="mt-auto relative z-10 w-full bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-500/20 uppercase">
-                      {selectedStation.type}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
-                      <Star size={11} className="fill-amber-400 text-amber-400" />
-                      {selectedStation.rating}
-                    </span>
-                  </div>
-                  <h4 className="text-base font-extrabold text-white">{selectedStation.name}</h4>
-                  <p className="text-xs text-slate-400 flex items-center gap-1">
-                    <MapPin size={12} className="text-slate-500" />
-                    {selectedStation.location}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t border-slate-800 md:border-t-0 pt-3 md:pt-0">
-                  <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estimasi Biaya</p>
-                    <p className="text-sm font-black text-white">Rp {selectedStation.pricePerKwh.toLocaleString()}/kWh</p>
-                  </div>
-                  <Link 
-                    to={`/station/${selectedStation.id}`}
-                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-900/40 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    Booking Slot
-                    <ChevronRight size={14} />
-                  </Link>
-                </div>
-              </div>
+            <div className="lg:col-span-7 min-h-[450px]">
+              <Map 
+                center={[104.0531, 1.1278]}
+                zoom={11}
+                stations={stations.map(s => ({
+                  id: s.id,
+                  name: s.name,
+                  latitude: s.latitude || 0,
+                  longitude: s.longitude || 0,
+                  type: s.type
+                }))}
+                selectedStationId={selectedStationId}
+                onSelectStation={(id) => setSelectedStationId(id)}
+                userCoords={userCoords}
+              />
             </div>
 
             {/* Right: Station List with Status Pills */}
