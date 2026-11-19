@@ -1,0 +1,110 @@
+@startuml gambar_4_activity_diagram_fcfs
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam defaultTextAlignment left
+skinparam shadowing false
+skinparam roundCorner 8
+
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  BorderThickness 1.5
+  FontColor #0F172A
+}
+skinparam arrow {
+  Color #1E293B
+  Thickness 1.5
+  FontColor #1E293B
+}
+
+title <b>ACTIVITY DIAGRAM ALUR RESERVASI DAN ANTREAN FCFS (POWERSYNC)</b>\n
+
+|Pengguna EV (Frontend)|
+start
+:1. Mengisi Formulir Pemesanan
+(Stasiun, Kendaraan, Konektor, Tanggal, Jam Mulai, Durasi);
+:2. Menekan Tombol "Kirim Reservasi";
+
+|Backend Laravel PowerSync|
+:Menerima request, autentikasi Bearer Token,
+dan validasi parameter input;
+:Mengecek kapasitas slot & bentrok jadwal;
+
+|Basis Data MySQL|
+:Query pengecekan data pada tabel slots & bookings;
+
+|Backend Laravel PowerSync|
+if (Apakah Slot Tersedia?) then (Ya [Slot Tersedia])
+  :Alokasikan slot_id kosong;
+  :Tetapkan status = 'ACCEPTED';
+  |Basis Data MySQL|
+  :INSERT INTO bookings
+  (status: 'ACCEPTED', slot_id: X);
+  |Backend Laravel PowerSync|
+  :Kirim HTTP 201 Created (Konfirmasi Berhasil);
+  |Pengguna EV (Frontend)|
+  :3a. Menerima konfirmasi reservasi
+  (Status: ACCEPTED);
+else (Tidak [Kapasitas Penuh])
+  |Backend Laravel PowerSync|
+  :Tetapkan status = 'PENDING';
+  :Catat timestamp created_at;
+  :Hitung urutan: position = count + 1;
+  |Basis Data MySQL|
+  :INSERT INTO bookings (status: 'PENDING')
+  & INSERT INTO queues (position: N);
+  |Backend Laravel PowerSync|
+  :Kirim HTTP 202 Accepted (Nomor Antrean);
+  |Pengguna EV (Frontend)|
+  :3b. Menerima posisi antrean FCFS di My Bookings
+  (Status: PENDING);
+endif
+
+|Pengguna EV (Frontend)|
+:4. Membuka Halaman 'My Bookings' saat tiba di lokasi;
+
+|Backend Laravel PowerSync|
+:Evaluasi waktu server terhadap jadwal:
+[-15 menit s.d. +10 menit dari start_time];
+
+if (Apakah Waktu Masuk Jendela Check-In?) then (Ya [Valid])
+  |Pengguna EV (Frontend)|
+  :5. Tombol Check-In aktif -> Tekan Check-In;
+  |Backend Laravel PowerSync|
+  :Catat check_in_time & ubah status = 'OCCUPIED';
+  |Basis Data MySQL|
+  :UPDATE bookings SET status='OCCUPIED', check_in_time=NOW();
+  |Backend Laravel PowerSync|
+  :Sesi pengisian daya selesai -> status = 'COMPLETED';
+  |Basis Data MySQL|
+  :UPDATE bookings SET status='COMPLETED';
+  |Pengguna EV (Frontend)|
+  :Selesai Sesi Pengisian;
+  stop
+else (Tidak [Terlambat / No-Show > 10m])
+  |Backend Laravel PowerSync|
+  :Batalkan reservasi -> status = 'CANCELLED';
+  |Basis Data MySQL|
+  :UPDATE bookings SET status='CANCELLED';
+  
+  |Backend Laravel PowerSync|
+  :Scheduled Command (UpdateBookingStatus)
+  menjalankan query promosi antrean FCFS:
+  <b>SELECT * FROM bookings WHERE status = 'PENDING'</b>
+  <b>ORDER BY created_at ASC, id ASC LIMIT 1</b>;
+  |Basis Data MySQL|
+  :Ambil rekaman antrean terdepan;
+  |Backend Laravel PowerSync|
+  :Alokasikan slot kosong ke antrean terdepan;
+  :Ubah status booking antrean menjadi 'ACCEPTED';
+  |Basis Data MySQL|
+  :UPDATE bookings SET status='ACCEPTED', slot_id=X;
+  :DELETE FROM queues WHERE user_id=Y;
+  :UPDATE queues SET position = position - 1;
+  |Pengguna EV (Frontend)|
+  :Pengguna antrean dipromosikan (Status menjadi ACCEPTED);
+  stop
+endif
+
+@enduml

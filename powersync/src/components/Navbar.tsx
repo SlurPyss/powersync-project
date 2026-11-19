@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-emerald-100/60 py-3 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })} className="flex items-center gap-2 group">
             <div className="bg-emerald-600 p-2 rounded-xl group-hover:rotate-12 transition-transform duration-300 shadow-md shadow-emerald-200">
               <Zap className="text-white" size={22} fill="currentColor" />
             </div>
@@ -77,6 +77,11 @@ const Navbar: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={() => {
+                    if (item.path === '/') {
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    }
+                  }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ${
                     isActive
                       ? 'text-emerald-700 bg-emerald-50'
@@ -191,6 +196,12 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (item.path === '/') {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  }
+                }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
                   isActive
                     ? 'text-emerald-700 bg-emerald-50'

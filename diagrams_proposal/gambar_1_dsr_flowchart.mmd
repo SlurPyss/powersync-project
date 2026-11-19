@@ -1,0 +1,44 @@
+%% =========================================================================
+%% GAMBAR 1: Bagan Alur Penelitian (Design Science Research - DSR 6 Tahap)
+%% Standar: Peffers et al. (2007)
+%% Judul: Pengembangan PowerSync sebagai Aplikasi Manajemen Antrean dan Reservasi
+%%        Berbasis Web untuk SPKLU Menggunakan Metode First Come First Served (FCFS)
+%% =========================================================================
+
+flowchart TD
+    %% Global Styling
+    classDef stepCard fill:#FFFFFF,stroke:#334155,stroke-width:1.5px,color:#0F172A,font-size:11px,text-align:left;
+    classDef startEnd fill:#1E293B,stroke:#0F172A,stroke-width:2px,color:#FFFFFF,font-size:12px,font-weight:bold;
+    classDef iterCard fill:#FEF2F2,stroke:#DC2626,stroke-width:1.5px,color:#991B1B,font-size:11px,text-align:left;
+
+    START([MULAI PENELITIAN]) --> T1
+
+    subgraph DSR_FRAMEWORK ["KERANGKA KERJA DESIGN SCIENCE RESEARCH METHODOLOGY (DSRM) - PEFFERS ET AL. (2007)"]
+        direction TB
+
+        T1["<b>TAHAP 1: IDENTIFIKASI MASALAH & MOTIVASI (Problem Identification & Motivation)</b><br/>• Melakukan observasi langsung di 5 lokasi SPKLU Kota Batam (Januari 2026)<br/>• Melaksanakan survei kuesioner kepada 30 responden pengemudi Kendaraan Listrik (EV)<br/>• Mengidentifikasi masalah riil: antrean fisik walk-in yang tidak teratur, fenomena range anxiety,<br/>  ketidakpastian ketersediaan slot, dan tingginya risiko double-booking."]
+
+        T2["<b>TAHAP 2: DEFINISI TUJUAN SOLUSI (Define Objectives of a Solution)</b><br/>• Merumuskan spesifikasi kebutuhan fungsional sistem manajemen antrean dan reservasi berbasis web<br/>• Mengintegrasikan algoritma First Come First Served (FCFS) sebagai mekanisme penjadwalan deterministik<br/>• Menjamin keadilan pengalokasian slot tanpa diskriminasi, transparansi antrean, dan kepastian pengisian daya."]
+
+        T3["<b>TAHAP 3: PERANCANGAN & PENGEMBANGAN ARTEFAK (Design & Development)</b><br/>• Merancang arsitektur perangkat lunak 3-Tier (Client Tier, Application Tier, dan Data Tier)<br/>• Memodelkan sistem menggunakan UML (Use Case Diagram, Activity Diagram) dan ERD (5 tabel inti)<br/>• Mengembangkan Frontend: React 18, TypeScript, Tailwind CSS, dan Vite<br/>• Mengembangkan Backend: Laravel 11 REST API, Autentikasi Sanctum, dan Scheduled Command Runner."]
+
+        T4["<b>TAHAP 4: DEMONSTRASI ARTEFAK (Demonstration)</b><br/>• Mengoperasikan artefak sistem PowerSync pada lingkungan pengujian lokal terisolasi<br/>• Menyimulasikan skenario pemesanan slot normal, kondisi lonjakan permintaan (over-capacity),<br/>  penyisipan antrean otomatis (queuing), dan promosi status reservasi (auto-promotion)<br/>• Menguji alur check-in kedatangan dengan toleransi jendela waktu (-15 menit s.d. +10 menit)."]
+
+        T5["<b>TAHAP 5: EVALUASI SISTEM (Evaluation)</b><br/>• Melaksanakan pengujian fungsional Black-Box berbasis standar formal ISO/IEC/IEEE 29119<br/>• Menjalankan 127 skenario uji fungsional (menghasilkan tingkat kelulusan 96,1% / 122 skenario lulus)<br/>• Melakukan pengujian integritas konkurensi (pessimistic locking) pada transaksi pemesanan bersamaan<br/>• Memverifikasi konsistensi pemetaan tri-layer (Antarmuka Web, Logika Backend, dan Basis Data)."]
+
+        T6["<b>TAHAP 6: KOMUNIKASI (Communication)</b><br/>• Menyusun dokumentasi teknis, manual pengguna, dan laporan Proposal / Tugas Akhir akademik<br/>• Mendiseminasikan hasil perancangan dan pengujian sistem dalam bentuk publikasi artikel ilmiah<br/>• Menyajikan kontribusi teoritis dan praktis metode FCFS pada ekosistem pengisian kendaraan listrik."]
+
+        T1 --> T2
+        T2 --> T3
+        T3 --> T4
+        T4 --> T5
+        
+        %% Iterasi / Loop Umpan Balik DSR
+        T5 -- "Evaluasi Valid & Memenuhi Syarat<br/>(Seluruh Skenario Lulus 100%)" --> T6
+        T5 -. "Iterasi Perbaikan Artefak (Refinement)<br/>[Resolusi Bug Konkurensi & Perbaikan Logika Antrean]" .-> T3
+    end
+
+    T6 --> FINISH([SELESAI PENELITIAN])
+
+    class START,FINISH startEnd;
+    class T1,T2,T3,T4,T5,T6 stepCard;

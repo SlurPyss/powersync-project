@@ -1,0 +1,144 @@
+%% =========================================================================
+%% GAMBAR 4: Activity Diagram Alur Reservasi dan Antrean FCFS
+%% Model: 3 Swimlane Terstruktur (Pengguna EV | Backend Laravel | Basis Data MySQL)
+%% Termasuk: Alur Pemesanan Normal, Antrean FCFS, Check-In Window, & Auto-Promotion
+%% =========================================================================
+
+flowchart TD
+    %% Styling Configuration
+    classDef clientLane fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,color:#0F172A,font-size:11px;
+    classDef beLane fill:#F0FDF4,stroke:#16A34A,stroke-width:1.5px,color:#0F172A,font-size:11px;
+    classDef dbLane fill:#FFFBEB,stroke:#D97706,stroke-width:1.5px,color:#0F172A,font-size:11px;
+    classDef actionBox fill:#FFFFFF,stroke:#334155,stroke-width:1.2px,color:#0F172A,font-size:10px,text-align:left;
+    classDef decBox fill:#FEF3C7,stroke:#B45309,stroke-width:1.5px,color:#78350F,font-size:10px,font-weight:bold;
+    classDef terminal fill:#1E293B,stroke:#0F172A,stroke-width:2px,color:#FFFFFF,font-size:11px,font-weight:bold;
+
+    %% -------------------------------------------------------------
+    %% SWIMLANE 1: PENGGUNA EV (KIRI)
+    %% -------------------------------------------------------------
+    subgraph LANE1 ["SWIMLANE 1: PENGGUNA EV (FRONTEND REACT)"]
+        direction TB
+        START_ACT([MULAI])
+        U1["1. Mengisi Formulir Pemesanan:<br/>(Stasiun, Kendaraan, Konektor, Tanggal, Jam Mulai, Durasi)"]
+        U2["2. Menekan Tombol 'Kirim Reservasi'"]
+        
+        U_CONFIRM["3a. Menerima Konfirmasi Reservasi:<br/><b>Status: ACCEPTED</b><br/>(Nomor Slot Terpasang & Jadwal Terkunci)"]
+        U_QUEUE["3b. Menerima Notifikasi Antrean:<br/><b>Status: PENDING</b><br/>(Melihat Nomor Antrean FCFS di My Bookings)"]
+        
+        U_OPEN_MB["4. Membuka Halaman 'My Bookings'<br/>saat tiba di lokasi SPKLU"]
+        U_CLICK_CI["5. Tombol Check-In Aktif:<br/>Pengguna Menekan Tombol 'Check-In'"]
+        U_DONE(["SELESAI SESI PENGISIAN"])
+
+        START_ACT --> U1
+        U1 --> U2
+    end
+
+    %% -------------------------------------------------------------
+    %% SWIMLANE 2: BACKEND LARAVEL (TENGAH)
+    %% -------------------------------------------------------------
+    subgraph LANE2 ["SWIMLANE 2: BACKEND LARAVEL (APPLICATION LOGIC)"]
+        direction TB
+        B1["Menerima request, autentikasi Bearer Token,<br/>dan validasi parameter input"]
+        B2["Mengeksekusi kueri pengecekan kapasitas slot<br/>dan potensi bentrok jadwal"]
+        
+        DEC_SLOT{"Apakah Slot<br/>Tersedia?"}
+
+        B_ACCEPT["Alokasikan slot_id kosong,<br/>tetapkan status = 'ACCEPTED'"]
+        B_QUEUE["Tetapkan status = 'PENDING',<br/>catat timestamp created_at,<br/>dan hitung urutan: position = count + 1"]
+
+        B_RESP_OK["Kirim JSON Response (HTTP 201 Created)"]
+        B_RESP_Q["Kirim JSON Response (HTTP 202 Accepted)"]
+
+        %% Logika Check-In & Scheduler
+        B_EVAL_TIME["Evaluasi Waktu Server terhadap Jadwal:<br/>Apakah berada dalam jendela toleransi<br/>(-15 Menit s.d. +10 Menit dari start_time)?"]
+        
+        DEC_TIME{"Jendela Waktu<br/>Check-In?"}
+
+        B_PROC_CI["Catat check_in_time,<br/>ubah status booking = 'OCCUPIED'"]
+        B_COMPLETING["Sesi pengisian daya selesai,<br/>ubah status booking = 'COMPLETED'"]
+
+        B_NOSHOW["Deteksi No-Show (&gt; +10 Menit):<br/>Ubah status booking = 'CANCELLED'"]
+
+        %% Scheduled Command Promotion
+        B_SCHED["Scheduled Command (UpdateBookingStatus):<br/>Query Antrean FCFS Terdepan:<br/><i>SELECT * FROM bookings WHERE status = 'PENDING'<br/>ORDER BY created_at ASC, id ASC LIMIT 1</i>"]
+        
+        B_PROMOTE["Promosi Antrean Otomatis FCFS:<br/>• Alokasikan slot_id yang baru kosong<br/>• Ubah status booking menjadi 'ACCEPTED'<br/>• Perbarui tabel antrean (decrement position)"]
+    end
+
+    %% -------------------------------------------------------------
+    %% SWIMLANE 3: BASIS DATA MYSQL (KANAN)
+    %% -------------------------------------------------------------
+    subgraph LANE3 ["SWIMLANE 3: BASIS DATA MYSQL (DATA TIER)"]
+        direction TB
+        DB_QUERY_CHECK[("Kueri validasi tabel slots & bookings")]
+        
+        DB_INSERT_BOOKING[("INSERT INTO bookings<br/>(status: 'ACCEPTED', slot_id: X)")]
+        
+        DB_INSERT_QUEUE[("INSERT INTO bookings (status: 'PENDING')<br/>& INSERT INTO queues (position: N)")]
+
+        DB_UPDATE_OCCUPIED[("UPDATE bookings<br/>SET status='OCCUPIED', check_in_time=NOW()")]
+
+        DB_UPDATE_COMPLETED[("UPDATE bookings<br/>SET status='COMPLETED'")]
+
+        DB_UPDATE_CANCEL[("UPDATE bookings<br/>SET status='CANCELLED' (No-Show)")]
+
+        DB_GET_NEXT_QUEUE[("Ambil rekaman antrean terdepan<br/>berdasarkan timestamp created_at")]
+
+        DB_UPDATE_PROMOTION[("UPDATE bookings SET status='ACCEPTED', slot_id=X<br/>& DELETE FROM queues WHERE user_id=Y<br/>& UPDATE queues SET position = position - 1")]
+    end
+
+    %% Paksaan Posisi Kolom Horisontal (Lane 1 [Kiri] -> Lane 2 [Tengah] -> Lane 3 [Kanan])
+    START_ACT ~~~ B1 ~~~ DB_QUERY_CHECK
+    U2 ~~~ B2
+    U_CONFIRM ~~~ B_RESP_OK ~~~ DB_INSERT_BOOKING
+    U_QUEUE ~~~ B_RESP_Q ~~~ DB_INSERT_QUEUE
+    U_OPEN_MB ~~~ B_EVAL_TIME ~~~ DB_UPDATE_OCCUPIED
+    U_CLICK_CI ~~~ B_PROC_CI ~~~ DB_UPDATE_COMPLETED
+    U_DONE ~~~ B_COMPLETING ~~~ DB_UPDATE_PROMOTION
+
+    %% Alur Kerja Antar-Swimlane
+    U2 --> B1
+    B1 --> B2
+    B2 --> DB_QUERY_CHECK
+    DB_QUERY_CHECK --> DEC_SLOT
+
+    %% Cabang Slot Tersedia (YA)
+    DEC_SLOT -- "YA [Slot Tersedia]" --> B_ACCEPT
+    B_ACCEPT --> DB_INSERT_BOOKING
+    DB_INSERT_BOOKING --> B_RESP_OK
+    B_RESP_OK --> U_CONFIRM
+
+    %% Cabang Slot Penuh (TIDAK)
+    DEC_SLOT -- "TIDAK [Kapasitas Penuh]" --> B_QUEUE
+    B_QUEUE --> DB_INSERT_QUEUE
+    DB_INSERT_QUEUE --> B_RESP_Q
+    B_RESP_Q --> U_QUEUE
+
+    %% Alur Check-In Kedatangan
+    U_CONFIRM -. "Saat Tiba di Hari-H" .-> U_OPEN_MB
+    U_OPEN_MB --> B_EVAL_TIME
+    B_EVAL_TIME --> DEC_TIME
+
+    DEC_TIME -- "Valid (-15m s.d. +10m)" --> U_CLICK_CI
+    U_CLICK_CI --> B_PROC_CI
+    B_PROC_CI --> DB_UPDATE_OCCUPIED
+    DB_UPDATE_OCCUPIED --> B_COMPLETING
+    B_COMPLETING --> DB_UPDATE_COMPLETED
+    DB_UPDATE_COMPLETED --> U_DONE
+
+    %% Cabang No-Show (> 10m)
+    DEC_TIME -- "Tidak Sah (Terlambat &gt; 10m)" --> B_NOSHOW
+    B_NOSHOW --> DB_UPDATE_CANCEL
+
+    %% Trigger Auto-Promotion dari Pembatalan No-Show
+    DB_UPDATE_CANCEL --> B_SCHED
+    B_SCHED --> DB_GET_NEXT_QUEUE
+    DB_GET_NEXT_QUEUE --> B_PROMOTE
+    B_PROMOTE --> DB_UPDATE_PROMOTION
+    DB_UPDATE_PROMOTION -. "Status Diperbarui Menjadi ACCEPTED" .-> U_OPEN_MB
+
+    class START_ACT,U_DONE terminal;
+    class DEC_SLOT,DEC_TIME decBox;
+    class U1,U2,U_CONFIRM,U_QUEUE,U_OPEN_MB,U_CLICK_CI actionBox;
+    class B1,B2,B_ACCEPT,B_QUEUE,B_RESP_OK,B_RESP_Q,B_EVAL_TIME,B_PROC_CI,B_COMPLETING,B_NOSHOW,B_SCHED,B_PROMOTE actionBox;
+    class DB_QUERY_CHECK,DB_INSERT_BOOKING,DB_INSERT_QUEUE,DB_UPDATE_OCCUPIED,DB_UPDATE_COMPLETED,DB_UPDATE_CANCEL,DB_GET_NEXT_QUEUE,DB_UPDATE_PROMOTION actionBox;

@@ -1,0 +1,66 @@
+@startuml gambar_1_dsr_flowchart
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam defaultTextAlignment left
+skinparam shadowing false
+skinparam roundCorner 8
+
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  BorderThickness 1.5
+  FontColor #0F172A
+}
+skinparam arrow {
+  Color #1E293B
+  Thickness 1.5
+  FontColor #1E293B
+  FontSize 10
+}
+
+title <b>BAGAN ALUR PENELITIAN DESIGN SCIENCE RESEARCH (DSR)</b>\n(Berdasarkan Kerangka Peffers et al., 2007)\n
+
+start
+:<b>TAHAP 1: IDENTIFIKASI MASALAH & MOTIVASI (Problem Identification & Motivation)</b>
+--
+• Melakukan observasi langsung di 5 lokasi SPKLU Kota Batam (Januari 2026)
+• Melaksanakan survei kuesioner kepada 30 responden pengguna Kendaraan Listrik (EV)
+• Masalah: antrean fisik walk-in tidak teratur, range anxiety, dan risiko double-booking;
+
+:<b>TAHAP 2: DEFINISI TUJUAN SOLUSI (Define Objectives of a Solution)</b>
+--
+• Merumuskan spesifikasi sistem manajemen antrean dan reservasi berbasis web
+• Menerapkan algoritma First Come First Served (FCFS) yang deterministik dan transparan
+• Menjamin keadilan alokasi slot serta kepastian waktu pengisian daya;
+
+repeat
+  :<b>TAHAP 3: PERANCANGAN & PENGEMBANGAN ARTEFAK (Design & Development)</b>
+  --
+  • Desain arsitektur 3-Tier (Client Tier, Application Tier, Data Tier)
+  • Pemodelan UML (Use Case, Activity Diagram) dan ERD (5 tabel relasional)
+  • Implementasi Frontend: React 18, TypeScript, Tailwind CSS, Vite
+  • Implementasi Backend: Laravel 11 REST API, Sanctum Auth, Scheduled Tasks;
+
+  :<b>TAHAP 4: DEMONSTRASI ARTEFAK (Demonstration)</b>
+  --
+  • Eksekusi sistem PowerSync pada lingkungan uji lokal terisolasi
+  • Simulasi pemesanan normal, over-capacity, penyisipan antrean, dan auto-promotion
+  • Pengujian alur check-in kedatangan dengan batas waktu (-15 menit s.d. +10 menit);
+
+  :<b>TAHAP 5: EVALUASI SISTEM (Evaluation)</b>
+  --
+  • Pengujian fungsional Black-Box berbasis standar ISO/IEC/IEEE 29119
+  • Eksekusi 127 skenario uji fungsional (kelulusan awal 96,1% / 122 skenario)
+  • Uji integritas konkurensi (pessimistic locking) & verifikasi tri-layer;
+repeat while (<b>Apakah ditemukan anomali / perbaikan?</b>) is (Ya [Iterasi Refinement])
+->Tidak [Hasil Uji Valid & Lulus 100%];
+
+:<b>TAHAP 6: KOMUNIKASI (Communication)</b>
+--
+• Penyusunan dokumentasi teknis sistem dan panduan operasional PowerSync
+• Penulisan laporan akademik Proposal / Tugas Akhir
+• Diseminasi hasil penelitian melalui artikel ilmiah dan jurnal internasional;
+
+stop
+@enduml

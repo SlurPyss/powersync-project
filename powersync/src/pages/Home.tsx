@@ -18,11 +18,12 @@ const Home: React.FC = () => {
     isGpsActive, 
     gpsError, 
     requestUserLocation, 
-    resetLocation 
+    resetLocation,
+    refreshStations
   } = useBooking();
   const location = useLocation();
 
-  // Scroll to section based on hash in URL
+  // Scroll to section based on hash in URL or to top if no hash
   useEffect(() => {
     if (location.hash) {
       const element = document.getElementById(location.hash.substring(1));
@@ -31,13 +32,41 @@ const Home: React.FC = () => {
           element.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
-  }, [location]);
+  }, [location.pathname, location.hash]);
 
   // Section 3: Interactive Map States
-  const [selectedStationId, setSelectedStationId] = useState<string>('A1');
+  const [selectedStationId, setSelectedStationId] = useState<string>('');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [loadingGps, setLoadingGps] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Auto-select first station once stations are loaded
+  useEffect(() => {
+    if (stations.length > 0) {
+      const exists = stations.some(s => s.id === selectedStationId);
+      if (!exists) {
+        setSelectedStationId(stations[0].id);
+      }
+    }
+  }, [stations, selectedStationId]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshStations();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleFilterNear = async () => {
+    setStationFilter('near');
+    if (!isGpsActive && !userCoords) {
+      setLoadingGps(true);
+      await requestUserLocation();
+      setLoadingGps(false);
+    }
+  };
 
   // Section 5: Experience Tabs State
   const [activeTab, setActiveTab] = useState<'search' | 'booking' | 'monitoring'>('search');
@@ -53,25 +82,27 @@ const Home: React.FC = () => {
   }, [batterySize, selectedStationId, stations]);
 
   // Filter stations for Section 3
-  const filteredStations = [...stations].filter(station => {
+  const filteredStations = stations.filter(station => {
     if (stationFilter === 'fast') {
-      return station.type.toLowerCase().includes('fast') || parseInt(station.power) >= 150;
+      const p = parseInt(station.power) || 0;
+      return station.type.toLowerCase().includes('fast') || p >= 100;
     }
     if (stationFilter === 'available') {
       return station.slots.available > 0;
     }
     if (stationFilter === 'near') {
-      return ['A1', 'A2', 'A4'].includes(station.id);
+      if (station.distance !== null && station.distance !== undefined) {
+        return station.distance <= 15;
+      }
+      return true;
     }
     return true;
   });
 
-  // Sort by nearest if GPS is active
-  const sortedStations = isGpsActive 
-    ? [...filteredStations].sort((a, b) => (a.distance || 999) - (b.distance || 999))
+  // Sort by nearest if GPS is active or filter is 'near'
+  const sortedStations = (stationFilter === 'near' || isGpsActive || userCoords)
+    ? [...filteredStations].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999))
     : filteredStations;
-
-
 
   return (
     <div className="flex flex-col bg-[#f8faf7] min-h-screen text-slate-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
@@ -381,9 +412,25 @@ const Home: React.FC = () => {
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-12">
             <div className="space-y-3">
-              <h2 className="text-emerald-600 font-extrabold tracking-widest text-xs uppercase">Dashboard SPKLU</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-emerald-600 font-extrabold tracking-widest text-xs uppercase font-mono">Dashboard SPKLU</h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Live Sync
+                </span>
+                <button 
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  title="Perbarui status slot real-time"
+                  className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Activity size={14} className={isRefreshing ? 'animate-spin text-emerald-600' : ''} />
+                </button>
+              </div>
               <h3 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Pantau Stasiun Secara Real-Time</h3>
-              <p className="text-slate-500 text-sm md:text-base max-w-2xl">Lihat slot pengisian yang tersedia, estimasi tarif per kWh, dan jenis konektor yang didukung di setiap titik.</p>
+              <p className="text-slate-500 text-sm md:text-base max-w-2xl">
+                Lihat slot pengisian yang tersedia, status terkini, estimasi tarif per kWh, dan jenis konektor yang didukung di setiap titik Batam.
+              </p>
             </div>
             
             {/* Interactive Filters & GPS Controls */}
@@ -465,7 +512,7 @@ const Home: React.FC = () => {
                   Tersedia
                 </button>
                 <button 
-                  onClick={() => setStationFilter('near')}
+                  onClick={handleFilterNear}
                   className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                     stationFilter === 'near' 
                       ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
@@ -489,7 +536,11 @@ const Home: React.FC = () => {
                   name: s.name,
                   latitude: s.latitude || 0,
                   longitude: s.longitude || 0,
-                  type: s.type
+                  type: s.type,
+                  power: s.power,
+                  availableSlots: s.slots.available,
+                  totalSlots: s.slots.total,
+                  pricePerKwh: s.pricePerKwh
                 }))}
                 selectedStationId={selectedStationId}
                 onSelectStation={(id) => setSelectedStationId(id)}
@@ -497,65 +548,94 @@ const Home: React.FC = () => {
               />
             </div>
 
-            {/* Right: Station List with Status Pills */}
+            {/* Right: Station List with Status Pills & Quick Actions */}
             <div className="lg:col-span-5 flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-1">
-              {sortedStations.map(station => {
-                const isSelected = station.id === selectedStationId;
-                const isAvailable = station.slots.available > 0;
-                
-                return (
-                  <div 
-                    key={station.id}
-                    onClick={() => setSelectedStationId(station.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                      isSelected 
-                        ? 'bg-slate-50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20' 
-                        : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900 mb-1 group-hover:text-emerald-600">{station.name}</h4>
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-1">{station.location}</p>
-                        {station.distance !== null && station.distance !== undefined ? (
-                          <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-                            <MapPin size={11} className="text-emerald-500" />
-                            Jarak dari lokasimu: {station.distance.toFixed(1)} km
-                          </p>
-                        ) : (
-                          <p className="text-[10px] text-slate-400 italic">
-                            Aktifkan lokasi untuk melihat jarak
-                          </p>
-                        )}
+              {sortedStations.length > 0 ? (
+                sortedStations.map(station => {
+                  const isSelected = station.id === selectedStationId;
+                  const isAvailable = station.slots.available > 0;
+                  
+                  return (
+                    <div 
+                      key={station.id}
+                      onClick={() => setSelectedStationId(station.id)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected 
+                          ? 'bg-emerald-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20' 
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900 mb-1 group-hover:text-emerald-600">{station.name}</h4>
+                          <p className="text-xs text-slate-500 line-clamp-1 mb-1">{station.location}</p>
+                          {station.distance !== null && station.distance !== undefined ? (
+                            <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                              <MapPin size={11} className="text-emerald-500" />
+                              Jarak dari lokasimu: {station.distance.toFixed(1)} km
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-slate-400 italic">
+                              Aktifkan lokasi untuk melihat jarak
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Status pill */}
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide border whitespace-nowrap ${
+                          isAvailable
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                        }`}>
+                          {isAvailable ? `${station.slots.available}/${station.slots.total} Slot` : 'Antre'}
+                        </span>
                       </div>
-                      
-                      {/* Status pill */}
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide border whitespace-nowrap ${
-                        isAvailable
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}>
-                        {isAvailable ? `${station.slots.available}/${station.slots.total} Slot` : 'Antre'}
-                      </span>
-                    </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3 text-xs font-bold text-slate-700">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-[11px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                          <Zap size={12} className="text-emerald-500" />
-                          {station.power}
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          {station.connectors.join(', ')}
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3 text-xs font-bold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1 text-[11px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">
+                            <Zap size={12} className="text-emerald-500" />
+                            {station.power}
+                          </span>
+                          <span className="text-[11px] text-slate-500 truncate max-w-[130px]">
+                            {station.connectors.join(', ')}
+                          </span>
+                        </div>
+                        <span className="text-emerald-700 font-extrabold">
+                          Rp {station.pricePerKwh.toLocaleString()}/kWh
                         </span>
                       </div>
-                      <span className="text-emerald-700 font-extrabold">
-                        Rp {station.pricePerKwh.toLocaleString()}/kWh
-                      </span>
+
+                      {/* Selected Quick Action Button */}
+                      {isSelected && (
+                        <div className="mt-3 pt-3 border-t border-emerald-100/80 flex items-center justify-between animate-fadeIn">
+                          <span className="text-[11px] text-emerald-700 font-semibold">
+                            {isAvailable ? `${station.slots.available} slot siap digunakan` : 'Semua slot terisi, bisa antre'}
+                          </span>
+                          <Link 
+                            to={`/station/${station.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-emerald-200"
+                          >
+                            Booking Slot
+                            <ChevronRight size={13} />
+                          </Link>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
+                  <p className="text-sm font-bold text-slate-600">Tidak ada stasiun yang sesuai filter.</p>
+                  <button 
+                    onClick={() => setStationFilter('all')} 
+                    className="text-xs font-bold text-emerald-600 hover:underline cursor-pointer"
+                  >
+                    Tampilkan Semua Stasiun
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           

@@ -1,0 +1,65 @@
+%% =========================================================================
+%% GAMBAR 5: Entity Relationship Diagram (ERD - Subbab 3.4.6)
+%% Notasi: Crow's Foot Notation
+%% Entitas: users, stations, slots, bookings, queues
+%% Fokus: Mekanisme FCFS (created_at pada bookings & position pada queues)
+%% =========================================================================
+
+erDiagram
+    users {
+        bigint id PK "Kunci Utama Pengguna"
+        string name "Nama Lengkap"
+        string email "Alamat Surel Unik"
+        string password "Hash Kata Sandi"
+        string phone "Nomor Telepon Kontak"
+        string vehicle_type "Tipe/Model Kendaraan EV"
+        string plate_number "Nomor Registrasi Pelat Nomor"
+    }
+
+    stations {
+        bigint id PK "Kunci Utama SPKLU"
+        string name "Nama Stasiun Pengisian"
+        text address "Alamat Fisik Lokasi"
+        decimal latitude "Koordinat Garis Lintang (Latitude)"
+        decimal longitude "Koordinat Garis Bujur (Longitude)"
+        int total_slots "Kapasitas Total Slot Pengisian"
+        string connector_type "Tipe Konektor (Type 2, CCS2, CHAdeMO)"
+        decimal power_kw "Kapasitas Output Daya Maksimum (kW)"
+        decimal price_per_kwh "Tarif Pengisian per kWh (Rp)"
+    }
+
+    slots {
+        bigint id PK "Kunci Utama Slot"
+        bigint station_id FK "Relasi ke Stasiun (stations)"
+        int slot_number "Nomor Identifikasi Slot Fisik"
+        string status "Status Fisik: available, occupied, maintenance"
+    }
+
+    bookings {
+        bigint id PK "Kunci Utama Reservasi"
+        bigint user_id FK "Relasi ke Pengguna (users)"
+        bigint station_id FK "Relasi ke Stasiun (stations)"
+        bigint slot_id FK "Relasi ke Slot (Nullable saat PENDING)"
+        date date "Tanggal Pelaksanaan Reservasi"
+        time start_time "Waktu Mulai Pengisian Daya"
+        time end_time "Waktu Selesai Sesi Pengisian"
+        timestamp check_in_time "Waktu Check-In Aktual Pengguna (Nullable)"
+        string status "Status: pending, accepted, occupied, completed, cancelled"
+        timestamp created_at "Timestamp Pemesanan (Kunci Prioritas FCFS)"
+    }
+
+    queues {
+        bigint id PK "Kunci Utama Antrean"
+        bigint user_id FK "Relasi ke Pengguna (users)"
+        bigint station_id FK "Relasi ke Stasiun (stations)"
+        int position "Nomor Urut Antrean FCFS (1, 2, 3, ...)"
+        timestamp created_at "Waktu Masuk Antrean Tunggu"
+    }
+
+    %% Relasi Antar-Entitas (Crow's Foot Cardinalities)
+    stations ||--|{ slots : "memiliki"
+    users ||--o{ bookings : "melakukan"
+    stations ||--o{ bookings : "melayani"
+    slots ||--o{ bookings : "dialokasikan_ke"
+    users ||--o{ queues : "memasuki"
+    stations ||--o{ queues : "mengelola"

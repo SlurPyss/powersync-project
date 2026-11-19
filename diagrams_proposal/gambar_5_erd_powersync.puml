@@ -1,0 +1,82 @@
+@startuml gambar_5_erd_powersync
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam roundCorner 8
+skinparam shadowing false
+
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #334155
+  BorderThickness 1.5
+  FontColor #0F172A
+}
+skinparam arrow {
+  Color #1E293B
+  Thickness 1.5
+}
+
+title <b>ENTITY RELATIONSHIP DIAGRAM (ERD) SISTEM POWERSYNC</b>\n(Notasi Crow's Foot)\n
+
+entity "users" as users {
+  * **id** : bigint <<PK>>
+  --
+  name : varchar(255)
+  email : varchar(255)
+  password : varchar(255)
+  phone : varchar(20)
+  vehicle_type : varchar(100)
+  plate_number : varchar(20)
+}
+
+entity "stations" as stations {
+  * **id** : bigint <<PK>>
+  --
+  name : varchar(255)
+  address : text
+  latitude : decimal(10,8)
+  longitude : decimal(11,8)
+  total_slots : int
+  connector_type : varchar(100)
+  power_kw : decimal(8,2)
+  price_per_kwh : decimal(10,2)
+}
+
+entity "slots" as slots {
+  * **id** : bigint <<PK>>
+  --
+  * **station_id** : bigint <<FK>>
+  slot_number : int
+  status : varchar(50)
+}
+
+entity "bookings" as bookings {
+  * **id** : bigint <<PK>>
+  --
+  * **user_id** : bigint <<FK>>
+  * **station_id** : bigint <<FK>>
+  slot_id : bigint <<FK, nullable>>
+  date : date
+  start_time : time
+  end_time : time
+  check_in_time : timestamp <<nullable>>
+  status : varchar(50)
+  created_at : timestamp <<kunci prioritas FCFS>>
+}
+
+entity "queues" as queues {
+  * **id** : bigint <<PK>>
+  --
+  * **user_id** : bigint <<FK>>
+  * **station_id** : bigint <<FK>>
+  position : int <<nomor urut FCFS>>
+  created_at : timestamp
+}
+
+stations ||--|{ slots : "memiliki (1:N)"
+users ||--o{ bookings : "melakukan (1:N)"
+stations ||--o{ bookings : "melayani (1:N)"
+slots ||--o{ bookings : "dialokasikan ke (1:N)"
+users ||--o{ queues : "memasuki (1:N)"
+stations ||--o{ queues : "mengelola (1:N)"
+@enduml

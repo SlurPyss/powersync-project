@@ -1,0 +1,80 @@
+%% =========================================================================
+%% GAMBAR 2: Gambaran Umum Sistem PowerSync (Arsitektur 3-Tier)
+%% Format: Three-Tier Architecture (Client Tier -> Application Tier -> Data Tier)
+%% Desain Kolom Berurutan Kiri ke Kanan (Left to Right Clean Architecture)
+%% =========================================================================
+
+flowchart LR
+    %% Styling Configuration
+    classDef clientBox fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,color:#1E3A8A,font-size:11px,text-align:left;
+    classDef appBox fill:#F0FDF4,stroke:#16A34A,stroke-width:1.5px,color:#14532D,font-size:11px,text-align:left;
+    classDef dataBox fill:#FFFBEB,stroke:#D97706,stroke-width:1.5px,color:#78350F,font-size:11px,text-align:left;
+    classDef actorBox fill:#1E293B,stroke:#0F172A,stroke-width:2px,color:#FFFFFF,font-size:11px,font-weight:bold;
+
+    %% -------------------------------------------------------------
+    %% TIER 1: LAPISAN PRESENTASI (CLIENT TIER)
+    %% -------------------------------------------------------------
+    subgraph TIER1 ["LAPISAN PRESENTASI (CLIENT TIER)"]
+        direction TB
+
+        subgraph ACTORS ["Aktor Pengguna Sistem"]
+            direction TB
+            ACT_USER["👤 <b>Pengguna EV (Driver)</b><br/>• Eksplorasi stasiun & slot<br/>• Pemesanan & pemantauan antrean<br/>• Check-in mandiri di lokasi"]
+            ACT_ADMIN["🛡️ <b>Administrator SPKLU</b><br/>• Pemantauan status slot & antrean<br/>• Manajemen stasiun pengisian"]
+        end
+
+        subgraph FE_APP ["Aplikasi Web Frontend (React 18 SPA)"]
+            direction TB
+            FE_CORE["<b>React 18 + TypeScript + Vite</b><br/>• State Management (Context API)<br/>• Desain UI: Tailwind CSS<br/>• HTTP Client: Axios"]
+            FE_MODULES["<b>Komponen Antarmuka:</b><br/>• Katalog SPKLU & Info Jarak<br/>• Formulir Reservasi & Durasi<br/>• Halaman My Bookings (Status FCFS)<br/>• Tombol Check-In Berbasis Waktu<br/>• Dasbor Pemantauan Admin"]
+        end
+
+        ACTORS --> FE_MODULES
+        FE_MODULES --- FE_CORE
+    end
+
+    %% -------------------------------------------------------------
+    %% TIER 2: LAPISAN LOGIKA BISNIS (APPLICATION TIER)
+    %% -------------------------------------------------------------
+    subgraph TIER2 ["LAPISAN LOGIKA BISNIS (APPLICATION TIER)"]
+        direction TB
+        
+        subgraph BE_APP ["Backend REST API (Laravel 11 / PHP 8.2+)"]
+            direction TB
+            
+            AUTH_MW["<b>Auth Middleware (Laravel Sanctum)</b><br/>• Validasi Bearer Token API<br/>• Role Guarding (User / Admin)"]
+            
+            BOOKING_CTRL["<b>BookingController & Logika FCFS</b><br/>• Validasi parameter & bentrok jadwal<br/>• Pemeriksaan kapasitas slot tersedia<br/>• Alokasi status 'ACCEPTED' (Slot Kosong)<br/>• Penetapan status 'PENDING' (Antrean Penuh)<br/>• Validasi batas check-in (-15m s.d. +10m)"]
+            
+            SCHEDULER_CMD["<b>Scheduled Command (UpdateBookingStatus)</b><br/>• Task scheduler periodik / background job<br/>• Deteksi no-show & pembatalan otomatis<br/>• Eksekusi algoritma promosi otomatis FCFS<br/>• Promosi antrean terdepan ke status 'ACCEPTED'"]
+        end
+
+        AUTH_MW --> BOOKING_CTRL
+        SCHEDULER_CMD -. "Pembaruan Status" .-> BOOKING_CTRL
+    end
+
+    %% -------------------------------------------------------------
+    %% TIER 3: LAPISAN PERSISTENSI DATA (DATA TIER)
+    %% -------------------------------------------------------------
+    subgraph TIER3 ["LAPISAN PERSISTENSI DATA (DATA TIER)"]
+        direction TB
+        
+        subgraph DB_MYSQL ["Basis Data Relasional (MySQL Server)"]
+            direction TB
+            T_USERS[("<b>tabel: users</b><br/>• Data akun, kontak & spesifikasi EV")]
+            T_STATIONS[("<b>tabel: stations</b><br/>• Lokasi, kapasitas slot, tipe konektor & daya")]
+            T_SLOTS[("<b>tabel: slots</b><br/>• Nomor identifikasi slot fisik & status")]
+            T_BOOKINGS[("<b>tabel: bookings</b><br/>• Jadwal, durasi, status reservasi<br/>• <i>Kunci Prioritas FCFS: created_at</i>")]
+            T_QUEUES[("<b>tabel: queues</b><br/>• Antrean tunggu over-capacity<br/>• <i>Kunci Urutan: position</i>")]
+        end
+    end
+
+    %% Koneksi Kolom Terstruktur (Kiri -> Tengah -> Kanan)
+    FE_CORE == "HTTP/HTTPS REST API<br/>(Bearer Token Sanctum & JSON DTO)" ==> AUTH_MW
+    BOOKING_CTRL == "Kueri SQL, Eloquent ORM<br/>& Pessimistic Row Locking" ==> DB_MYSQL
+    SCHEDULER_CMD == "Kueri Antrean Terdepan<br/>& Transaksi Status" ==> DB_MYSQL
+
+    class ACT_USER,ACT_ADMIN actorBox;
+    class FE_CORE,FE_MODULES clientBox;
+    class AUTH_MW,BOOKING_CTRL,SCHEDULER_CMD appBox;
+    class T_USERS,T_STATIONS,T_SLOTS,T_BOOKINGS,T_QUEUES dataBox;

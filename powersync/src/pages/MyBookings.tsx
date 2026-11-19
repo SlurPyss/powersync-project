@@ -7,7 +7,7 @@ import {
 import { Link } from 'react-router-dom';
 
 const MyBookings: React.FC = () => {
-  const { bookings, deleteBooking, checkIn } = useBooking();
+  const { bookings, deleteBooking, checkIn, finishCharging } = useBooking();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const getStatusStyle = (status: string) => {
@@ -16,7 +16,7 @@ const MyBookings: React.FC = () => {
       case 'accepted': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'ready': return 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm shadow-emerald-100';
       case 'occupied': return 'bg-emerald-600 text-white border-emerald-700';
-      case 'completed': return 'bg-slate-100 text-slate-700 border-slate-200 opacity-50';
+      case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'cancelled': return 'bg-rose-100 text-rose-700 border-rose-200';
       default: return 'bg-slate-100 text-slate-700';
     }
@@ -41,6 +41,19 @@ const MyBookings: React.FC = () => {
       alert('Check-in Berhasil! Mohon segera hubungkan kendaraan Anda.');
     } catch (error: any) {
       alert(error.response?.data?.message || 'Check-in gagal.');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleFinishCharging = async (bookingId: string) => {
+    if (!window.confirm('Apakah Anda yakin ingin menyelesaikan sesi pengisian daya sekarang?')) return;
+    setLoadingAction(bookingId);
+    try {
+      await finishCharging(bookingId);
+      alert('Pengisian Daya Selesai! Terima kasih telah menggunakan PowerSync.');
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Gagal menyelesaikan pengisian.');
     } finally {
       setLoadingAction(null);
     }
@@ -157,6 +170,16 @@ const MyBookings: React.FC = () => {
                             {loadingAction === booking.id ? 'Memproses...' : 'Check-In'}
                          </button>
                        )}
+                       {booking.status === 'occupied' && (
+                         <button 
+                            onClick={() => handleFinishCharging(booking.id)}
+                            disabled={loadingAction === booking.id}
+                            className="flex-1 bg-emerald-600 text-white rounded-2xl py-3 font-black text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                          >
+                            <CheckCircle2 size={18} />
+                            {loadingAction === booking.id ? 'Memproses...' : 'Selesai Mengisi'}
+                         </button>
+                       )}
                        {isActiveBooking && timeStatus === 'early' && (
                          <div className="flex-1 bg-slate-100 text-slate-400 rounded-2xl py-3 font-bold text-xs flex items-center justify-center gap-2 text-center px-2">
                            <Clock size={16} />
@@ -172,7 +195,12 @@ const MyBookings: React.FC = () => {
                        
                        <button 
                         onClick={() => deleteBooking(booking.id)}
-                        className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all border border-slate-100 flex items-center justify-center gap-2 font-bold text-sm"
+                        disabled={booking.status === 'occupied'}
+                        className={`p-3 rounded-xl transition-all border flex items-center justify-center gap-2 font-bold text-sm ${
+                          booking.status === 'occupied' 
+                            ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                            : 'bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 border-slate-100'
+                        }`}
                        >
                          <Trash2 size={18} />
                          {booking.status === 'completed' || booking.status === 'cancelled' ? 'Hapus Riwayat' : 'Batalkan Reservasi'}

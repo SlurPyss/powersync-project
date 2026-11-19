@@ -1,0 +1,51 @@
+%% =========================================================================
+%% GAMBAR 3: Diagram Use Case Sistem PowerSync
+%% Standar: UML Use Case Diagram
+%% Boundary: Sistem Manajemen Antrean & Reservasi SPKLU (PowerSync)
+%% Tata Letak: Pengguna EV (Kiri) | Batas Sistem (Tengah) | Administrator (Kanan)
+%% =========================================================================
+
+flowchart LR
+    %% Global Styling
+    classDef actorBox fill:#1E293B,stroke:#0F172A,stroke-width:2px,color:#FFFFFF,font-weight:bold,font-size:12px;
+    classDef ucBox fill:#FFFFFF,stroke:#1E3A8A,stroke-width:1.5px,color:#0F172A,font-size:11px;
+    classDef incBox fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,stroke-dasharray: 4 4,color:#1E40AF,font-size:10px;
+
+    %% Aktor Kiri
+    USER(["👤 <b>Pengguna EV</b><br/>(Driver Kendaraan Listrik)"])
+
+    %% Batas Sistem (System Boundary)
+    subgraph SYSTEM ["BATAS SISTEM: SISTEM MANAJEMEN ANTREAN & RESERVASI SPKLU (POWERSYNC)"]
+        direction TB
+
+        UC1(["<b>UC-01: Mengelola Autentikasi & Profil Kendaraan</b><br/>(Registrasi Akun, Login, Pengelolaan Data Profil & Spesifikasi Kendaraan)"])
+        UC2(["<b>UC-02: Mencari & Memantau Ketersediaan Slot SPKLU</b><br/>(Katalog Lokasi, Status Slot Real-Time, Informasi Tarif, dan Daya Charger)"])
+        UC3(["<b>UC-03: Melakukan Reservasi Slot & Masuk Antrean FCFS</b><br/>(Pemilihan Jadwal, Durasi Pengisian, Alokasi Slot Otomatis, dan Nomor Antrean)"])
+        UC4(["<b>UC-04: Melakukan Check-In Kedatangan</b><br/>(Konfirmasi Kehadiran Fisik pada Stasiun Pengisian Terpilih)"])
+        UC5(["<b>UC-05: Mengelola Operasional SPKLU, Slot & Memantau Antrean</b><br/>(Monitoring Seluruh Reservasi Aktif, Antrean Tunggu, dan Pengaturan Stasiun)"])
+
+        %% Sub-use case / Included Use Cases
+        INC1[["<i>&laquo;include&raquo;</i><br/><b>Validasi Kapasitas Slot & Deteksi Bentrok Jadwal</b>"]]
+        INC2[["<i>&laquo;include&raquo;</i><br/><b>Validasi Jendela Waktu Check-In (-15 Menit s.d. +10 Menit)</b>"]]
+
+        %% Hubungan Include
+        UC3 -. "&laquo;include&raquo;" .-> INC1
+        UC4 -. "&laquo;include&raquo;" .-> INC2
+    end
+
+    %% Aktor Kanan
+    ADMIN(["🛡️ <b>Administrator SPKLU</b><br/>(Operator Sistem)"])
+
+    %% Asosiasi Pengguna EV (Kiri)
+    USER --- UC1
+    USER --- UC2
+    USER --- UC3
+    USER --- UC4
+
+    %% Asosiasi Administrator (Kanan)
+    UC1 --- ADMIN
+    UC5 --- ADMIN
+
+    class USER,ADMIN actorBox;
+    class UC1,UC2,UC3,UC4,UC5 ucBox;
+    class INC1,INC2 incBox;

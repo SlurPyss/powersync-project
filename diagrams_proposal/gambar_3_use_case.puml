@@ -1,0 +1,57 @@
+@startuml gambar_3_use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam roundCorner 8
+
+skinparam actor {
+  BackgroundColor #1E293B
+  BorderColor #0F172A
+  FontColor #0F172A
+  FontSize 11
+}
+
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #1E3A8A
+  BorderThickness 1.5
+  FontColor #0F172A
+  FontSize 11
+}
+
+skinparam arrow {
+  Color #1E293B
+  Thickness 1.5
+  FontColor #1E293B
+}
+
+title <b>DIAGRAM USE CASE SISTEM MANAJEMEN ANTREAN & RESERVASI SPKLU (POWERSYNC)</b>\n
+
+actor "Pengguna EV\n(Driver)" as User
+actor "Administrator\nSPKLU" as Admin
+
+rectangle "Sistem Manajemen Antrean & Reservasi SPKLU (PowerSync)" as System #F8FAFC {
+  usecase "<b>UC-01: Mengelola Autentikasi\n& Profil Kendaraan</b>\n(Register, Login, Data EV)" as UC1 #FFFFFF
+  usecase "<b>UC-02: Mencari & Memantau\nKetersediaan Slot SPKLU</b>\n(Katalog, Status Real-Time)" as UC2 #FFFFFF
+  usecase "<b>UC-03: Melakukan Reservasi Slot\n& Masuk Antrean FCFS</b>" as UC3 #FFFFFF
+  usecase "<b>UC-04: Melakukan Check-In\nKedatangan</b>" as UC4 #FFFFFF
+  usecase "<b>UC-05: Mengelola Operasional SPKLU,\nSlot & Memantau Antrean</b>" as UC5 #FFFFFF
+  
+  usecase "<i><<include>></i>\n<b>Validasi Kapasitas Slot\n& Bentrok Jadwal</b>" as UC_Inc1 #EFF6FF
+  usecase "<i><<include>></i>\n<b>Validasi Jendela Waktu Check-In\n(-15m s.d. +10m)</b>" as UC_Inc2 #EFF6FF
+
+  UC3 .> UC_Inc1 : <<include>>
+  UC4 .> UC_Inc2 : <<include>>
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+
+Admin --> UC1
+Admin --> UC5
+@enduml

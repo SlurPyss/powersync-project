@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings/{id}/check-in', [BookingController::class, 'checkIn']);
+    Route::post('/bookings/{id}/finish', [BookingController::class, 'finishCharging']);
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::post('/stations/{id}/book', [BookingController::class, 'store']);
     Route::get('/bookings/stats', [BookingController::class, 'stats']);

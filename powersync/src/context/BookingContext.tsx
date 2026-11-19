@@ -19,15 +19,69 @@ interface BookingContextType {
   deleteBooking: (bookingId: string) => Promise<void>;
   isLoading: boolean;
   checkIn: (bookingId: string) => Promise<any>;
+  finishCharging: (bookingId: string) => Promise<any>;
   refreshBookings: () => Promise<void>;
   userCoords: { latitude: number; longitude: number } | null;
   isGpsActive: boolean;
   gpsError: string | null;
   requestUserLocation: () => Promise<boolean>;
   resetLocation: () => void;
+  refreshStations: () => Promise<void>;
+  lastUpdated: Date | null;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
+
+const DEFAULT_STATION_IMAGE = 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000';
+
+const parseList = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(String).map(s => s.trim()).filter(Boolean);
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed.map(String).map(s => s.trim()).filter(Boolean);
+        }
+      } catch {
+        // continue
+      }
+    }
+    return trimmed
+      .replace(/[\[\]"']/g, '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const getStationCoordinates = (stationName: string = '', locationStr: string = '') => {
+  const text = `${stationName} ${locationStr}`.toLowerCase();
+  
+  if (text.includes('nagoya')) {
+    return { latitude: 1.1437, longitude: 104.0152, address: 'Jl. Teuku Umar, Lubuk Baja, Batam', area: 'Nagoya Hill / Lubuk Baja' };
+  }
+  if (text.includes('batam centre') || text.includes('mega mall') || text.includes('engku putri')) {
+    return { latitude: 1.1278, longitude: 104.0531, address: 'Mega Mall Batam Centre, Engku Putri', area: 'Batam Centre' };
+  }
+  if (text.includes('harbour') || text.includes('batu ampar')) {
+    return { latitude: 1.1512, longitude: 104.0125, address: 'Batu Ampar, Ferry Terminal Area, Batam', area: 'Harbour Bay / Batu Ampar' };
+  }
+  if (text.includes('grand batam') || text.includes('penuin')) {
+    return { latitude: 1.1309, longitude: 104.0108, address: 'Grand Batam Mall, Penuin', area: 'Grand Batam Mall / Penuin' };
+  }
+  if (text.includes('bcs') || text.includes('baloi')) {
+    return { latitude: 1.1306, longitude: 104.0028, address: 'Jl. Bunga Raya, Baloi, Batam', area: 'BCS Mall / Baloi' };
+  }
+  if (text.includes('kepri') || text.includes('kabil')) {
+    return { latitude: 1.1098, longitude: 104.0384, address: 'Kepri Mall, Simpang Kabil', area: 'Kepri Mall / Simpang Kabil' };
+  }
+
+  return { latitude: 1.1301, longitude: 104.0529, address: locationStr || 'Batam Centre', area: 'Batam' };
+};
 
 export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, token } = useAuth();
@@ -79,40 +133,68 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Fetch stations
-  useEffect(() => {
-    const fetchStations = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/stations`);
-        if (response.data && response.data.length > 0) {
-          const mappedStations: Station[] = response.data.map((s: any) => ({
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(new Date());
+
+  const fetchStations = async (silent: boolean = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/stations`);
+      if (response.data && response.data.length > 0) {
+        const mappedStations: Station[] = response.data.map((s: any) => {
+          const coords = getStationCoordinates(s.name, s.location);
+          const lat = s.latitude ? Number(s.latitude) : coords.latitude;
+          const lon = s.longitude ? Number(s.longitude) : coords.longitude;
+          const dist = userCoords
+            ? parseFloat(calculateDistance(userCoords.latitude, userCoords.longitude, lat, lon).toFixed(2))
+            : null;
+
+          return {
             id: s.id.toString(),
             name: s.name,
-            location: s.location,
+            location: s.location || coords.address,
             type: s.type as ChargerType,
-            power: s.power,
-            connectors: s.connectors ? s.connectors.split(', ') : [],
+            power: s.power || '150kW',
+            connectors: parseList(s.connectors),
             slots: {
-              available: s.available_slots,
-              total: s.capacity,
+              available: s.available_slots ?? 0,
+              total: s.capacity ?? 2,
             },
-            pricePerKwh: s.price_per_kwh,
-            facilities: s.facilities ? s.facilities.split(', ') : [],
-            operatingHours: s.operating_hours,
-            rating: s.rating,
-            image: s.image,
-          }));
-          setStations(mappedStations);
-        }
-      } catch (error) {
-        console.warn('Backend API not ready, using mock data:', error);
-      } finally {
-        setIsLoading(false);
+            pricePerKwh: s.price_per_kwh ?? 2500,
+            facilities: parseList(s.facilities),
+            operatingHours: s.operating_hours || '24/7',
+            rating: s.rating ?? 4.8,
+            image: s.image && s.image.trim() !== '' ? s.image : DEFAULT_STATION_IMAGE,
+            address: s.address || coords.address,
+            area: s.area || coords.area,
+            latitude: lat,
+            longitude: lon,
+            distance: dist,
+          };
+        });
+        setStations(mappedStations);
+        setLastUpdated(new Date());
       }
-    };
+    } catch (error) {
+      console.warn('Backend API not ready, using mock data:', error);
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
+  const refreshStations = async () => {
+    await fetchStations(false);
+  };
+
+  // Real-time polling: initial fetch & poll every 10 seconds
+  useEffect(() => {
     fetchStations();
-  }, []);
+
+    const interval = setInterval(() => {
+      fetchStations(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [userCoords]);
 
   // Fetch bookings when auth changes
   useEffect(() => {
@@ -162,6 +244,17 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return response.data;
     } catch (error) {
       console.error('Failed to check in:', error);
+      throw error;
+    }
+  };
+
+  const finishCharging = async (bookingId: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/bookings/${bookingId}/finish`);
+      await refreshBookings();
+      return response.data;
+    } catch (error) {
+      console.error('Failed to finish charging:', error);
       throw error;
     }
   };
@@ -234,8 +327,8 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <BookingContext.Provider
       value={{ 
-        stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, checkIn, refreshBookings,
-        userCoords, isGpsActive, gpsError, requestUserLocation, resetLocation
+        stations, bookings, addBooking, updateBookingStatus, deleteBooking, isLoading, checkIn, finishCharging, refreshBookings,
+        userCoords, isGpsActive, gpsError, requestUserLocation, resetLocation, refreshStations, lastUpdated
       }}
     >
       {children}

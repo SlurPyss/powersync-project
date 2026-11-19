@@ -1,0 +1,55 @@
+@startuml gambar_2_arsitektur_3tier
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam defaultTextAlignment left
+skinparam shadowing false
+skinparam roundCorner 8
+
+skinparam component {
+  BorderThickness 1.5
+}
+skinparam arrow {
+  Color #1E293B
+  Thickness 1.5
+  FontColor #1E293B
+}
+
+title <b>GAMBARAN UMUM SISTEM POWERSYNC (ARSITEKTUR 3-TIER)</b>\n
+
+package "Lapisan Presentasi (Client Tier)" as ClientTier #EFF6FF {
+  actor "Pengguna Kendaraan Listrik\n(EV Driver)" as User #1E293B
+  actor "Administrator SPKLU" as Admin #1E293B
+
+  component "Aplikasi Web Frontend\n(React 18 + TypeScript + Vite)\n--\n• Katalog Stasiun & Estimasi Jarak\n• Formulir Reservasi Slot\n• Halaman My Bookings (Status FCFS)\n• Tombol Check-In Berbasis Waktu\n• Dasbor Monitoring Admin" as Frontend #DBEAFE
+  
+  User --> Frontend : Akses Antarmuka
+  Admin --> Frontend : Akses Dasbor
+}
+
+cloud "Protokol Komunikasi\n(REST API / JSON)\n--\nHeader: Authorization Bearer <Token>\nPayload: Data Transfer Object (JSON)" as Network #F8FAFC
+
+package "Lapisan Logika Bisnis (Application Tier)" as AppTier #F0FDF4 {
+  component "Laravel 11 REST API" as Backend #DCFCE7 {
+    component "Auth Middleware\n(Laravel Sanctum Token Guard)" as AuthMW #FFFFFF
+    component "BookingController & Logika FCFS\n--\n• Validasi Bentrok Jadwal & Kapasitas Slot\n• Alokasi Status 'ACCEPTED' (Slot Tersedia)\n• Penyisipan Antrean 'PENDING' (Kapasitas Penuh)\n• Validasi Jendela Check-In (-15m s.d. +10m)" as BookingCtrl #FFFFFF
+    component "Scheduled Command\n(UpdateBookingStatus)\n--\n• Cron / Background Task Scheduler\n• Deteksi Pembatalan Otomatis (No-Show)\n• Promosi Antrean Otomatis (FCFS)" as Scheduler #FFFFFF
+  }
+}
+
+package "Lapisan Persistensi Data (Data Tier)" as DataTier #FFFBEB {
+  database "MySQL Database Server" as MySQL #FEF3C7 {
+    entity "users (Kredensial & Profil)" as tb_users #FFFFFF
+    entity "stations (Data & Lokasi SPKLU)" as tb_stations #FFFFFF
+    entity "slots (Status Fisik Slot Pengisian)" as tb_slots #FFFFFF
+    entity "bookings (Reservasi, Prioritas: created_at)" as tb_bookings #FFFFFF
+    entity "queues (Antrean Tunggu, Urutan: position)" as tb_queues #FFFFFF
+  }
+}
+
+Frontend <--> Network : HTTP/HTTPS Request & Response
+Network <--> AuthMW : Verifikasi Bearer Token
+AuthMW --> BookingCtrl : Request Terotorisasi
+BookingCtrl <--> MySQL : Kueri SQL, Eloquent ORM & Pessimistic Locking
+Scheduler <--> MySQL : Kueri Antrean Terdepan & Update Status
+@enduml

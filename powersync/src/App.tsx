@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BookingProvider } from './context/BookingContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
     <AuthProvider>
       <BookingProvider>
         <Router>
+          <ScrollToTop />
           <div className="flex flex-col min-h-screen font-sans antialiased text-slate-900 bg-white">
             <Navbar />
             <main className="flex-grow">

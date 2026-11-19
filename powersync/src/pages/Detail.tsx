@@ -119,9 +119,14 @@ const Detail: React.FC = () => {
           <div className="lg:col-span-12 xl:col-span-7 space-y-8">
             <div className="bg-white rounded-[3rem] overflow-hidden shadow-sm border border-slate-100">
                <img 
-                src={station.image} 
+                src={station.image || 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000'} 
                 alt={station.name} 
                 className="w-full h-[450px] object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.onerror = null;
+                  target.src = 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?auto=format&fit=crop&q=80&w=1000';
+                }}
               />
                <div className="p-10 space-y-6">
                 <div className="flex flex-wrap justify-between items-start gap-4">
